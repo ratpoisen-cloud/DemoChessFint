@@ -1,46 +1,31 @@
-:root {
-    --bg: #0f0f0f; --card: #1a1a1a; --accent: #4caf50; --danger: #f44336; --text: #e0e0e0; --border: #333;
-}
-body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; justify-content: center; }
-.main-container { width: 100%; max-width: 1000px; padding: 20px; }
-.top-bar { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 20px; gap: 10px; }
+:root { --bg: #0f0f0f; --card: #1a1a1a; --accent: #4caf50; --danger: #f44336; --text: #e0e0e0; --border: #333; }
+body { background: var(--bg); color: var(--text); font-family: sans-serif; margin: 0; display: flex; justify-content: center; overflow-x: hidden; }
+.main-container { width: 100%; max-width: 1000px; padding: 15px; box-sizing: border-box; }
+.top-bar { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 15px; gap: 10px; min-height: 45px; }
 #user-photo { width: 35px; height: 35px; border-radius: 50%; border: 2px solid var(--accent); }
 
-.card { background: var(--card); padding: 30px; border-radius: 15px; text-align: center; border: 1px solid var(--border); }
-.games-grid { display: grid; gap: 10px; margin: 20px 0; max-height: 300px; overflow-y: auto; }
-.game-item { background: #252525; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border-left: 4px solid var(--accent); }
-
-.game-layout { display: grid; grid-template-columns: 1fr 280px; gap: 20px; }
-.board-area { position: relative; }
-.status-box { background: var(--card); padding: 10px; border-radius: 8px; margin-bottom: 10px; text-align: center; font-weight: bold; color: var(--accent); }
-
-.confirm-overlay { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 100; display: flex; gap: 20px; background: rgba(0,0,0,0.85); padding: 12px 30px; border-radius: 60px; backdrop-filter: blur(5px); border: 1px solid var(--accent); }
-.btn-round { width: 55px; height: 55px; border-radius: 50%; border: none; cursor: pointer; font-size: 1.6rem; color: white; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
-.btn-round:hover { transform: scale(1.1); }
-
-.side-panel { background: var(--card); border-radius: 12px; padding: 15px; display: flex; flex-direction: column; border: 1px solid var(--border); }
-.move-list-content { flex-grow: 1; overflow-y: auto; height: 350px; font-family: monospace; display: grid; grid-template-columns: 40px 1fr 1fr; gap: 5px; padding: 10px; background: #000; border-radius: 5px; }
-
-.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-.modal-content { background: var(--card); padding: 40px; border-radius: 20px; text-align: center; border: 2px solid var(--accent); box-shadow: 0 0 30px rgba(76, 175, 80, 0.3); }
-
-.hidden { display: none !important; }
-.btn { padding: 10px 18px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+.auth-group { display: flex; gap: 8px; }
+.btn { padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
 .btn-success { background: var(--accent); color: white; }
 .btn-danger { background: var(--danger); color: white; }
-.btn-sm { padding: 5px 10px; font-size: 0.8rem; }
-.btn-large { width: 100%; padding: 15px; font-size: 1.1rem; }
-#room-link { background: #000; color: #888; border: 1px solid var(--border); padding: 8px; width: 100%; border-radius: 4px; margin-top: 5px; cursor: pointer; }
+.btn-dark { background: #000; color: white; border: 1px solid #444; }
+.btn-outline { background: transparent; color: white; border: 1px solid var(--border); }
+.btn-google { background: #4285F4; color: white; }
 
-@media (max-width: 800px) { .game-layout { grid-template-columns: 1fr; } }
-/* Подсветка выбранного поля */
-.highlight-selected {
-    box-shadow: inset 0 0 3px 3px rgba(255, 255, 0, 0.7);
-    background-color: rgba(255, 255, 0, 0.3) !important;
-}
-/* Отключаем выделение текста и системные жесты, чтобы не мешали играть */
-#myBoard {
-    touch-action: none;
-    -webkit-user-select: none;
-    user-select: none;
-}
+.hidden { display: none !important; }
+
+/* Подсветка клика на мобильном */
+.highlight-selected { background-color: rgba(255, 255, 0, 0.4) !important; box-shadow: inset 0 0 5px 2px yellow; }
+
+.board-area { position: relative; width: 100%; max-width: 500px; margin: 0 auto; }
+.confirm-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; gap: 20px; z-index: 100; }
+.btn-round { width: 70px; height: 70px; border-radius: 50%; border: none; font-size: 30px; color: white; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+
+.game-layout { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
+.side-panel { background: var(--card); padding: 15px; border-radius: 10px; width: 100%; max-width: 300px; border: 1px solid var(--border); }
+.move-list-content { height: 150px; overflow-y: auto; background: #000; padding: 10px; font-family: monospace; }
+
+/* Модалки */
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+.modal-content { background: var(--card); padding: 30px; border-radius: 15px; text-align: center; border: 2px solid var(--accent); width: 100%; max-width: 400px; }
+.input-field { width: 100%; padding: 12px; margin: 10px 0; background: #000; border: 1px solid var(--border); color: white; border-radius: 5px; box-sizing: border-box; }
