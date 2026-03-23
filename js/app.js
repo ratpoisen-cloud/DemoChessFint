@@ -1,9 +1,6 @@
 import { db } from './firebase-config.js';
-import { ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { ref, set, onValue, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-console.log("Скрипт app.js запущен!"); // Проверка старта
-
-// 1. Инициализация комнаты
 const urlParams = new URLSearchParams(window.location.search);
 let roomId = urlParams.get('room');
 if (!roomId) {
@@ -11,31 +8,71 @@ if (!roomId) {
     window.history.pushState({}, '', `?room=${roomId}`);
 }
 
-// Теперь эти строки ДОЛЖНЫ сработать, если скрипт жив
-document.getElementById('room-id').innerText = roomId;
-document.getElementById('room-link').value = window.location.href;
-
 const gameRef = ref(db, 'games/' + roomId);
+const playersRef = ref(db, 'games/' + roomId + '/players');
 
-// 2. Инициализация игры
 let board = null;
-// Используем window.Chess для надежности
-const ChessInstance = window.Chess || Chess; 
-let game = new ChessInstance();
-const statusEl = document.getElementById('status');
+let game = new Chess();
+let playerColor = null; // 'w', 'b' или null для зрителя
+
+// --- 1. ОПРЕДЕЛЕНИЕ РОЛИ ИГРОКА ---
+// Используем транзакцию, чтобы два игрока не заняли один цвет одновременно
+runTransaction(playersRef, (currentPlayers) => {
+    if (currentPlayers === null) {
+        playerColor = 'w';
+        return { white: true };
+    } else if (!currentPlayers.black) {
+        playerColor = 'b';
+        return { ...currentPlayers, black: true };
+    }
+    return; // Зритель
+}).then(() => {
+    const colorText = playerColor === 'w' ? 'БЕЛЫХ' : (playerColor === 'b' ? 'ЧЕРНЫХ' : 'ЗРИТЕЛЯ');
+    document.getElementById('user-color').innerText = colorText;
+    if (playerColor === 'b') board.orientation('black'); // Переворачиваем доску для черных
+});
+
+// --- 2. ПРОВЕРКА ПРАВА ХОДА ---
+function onDragStart (source, piece, position, orientation) {
+    // Не даем двигать фигуры, если игра окончена
+    if (game.game_over()) return false;
+
+    // Зритель не может ходить
+    if (!playerColor) return false;
+
+    // Можно двигать только свои фигуры и только в свой ход
+    if ((playerColor === 'w' && piece.search(/^b/) !== -1) ||
+        (playerColor === 'b' && piece.search(/^w/) !== -1) ||
+        (game.turn() !== playerColor)) {
+        return false;
+    }
+}
 
 function onDrop(source, target) {
     const move = game.move({
         from: source,
         to: target,
-        promotion: 'q' 
+        promotion: 'q'
     });
 
     if (move === null) return 'snapback';
 
+    updateFirebase();
+}
+
+// --- 3. ОТМЕНА ХОДА ---
+document.getElementById('undo-btn').onclick = () => {
+    // Отменяем ход только если сейчас ход противника (т.е. мы только что сходили)
+    // Или если это дружеская игра — можно разрешить всегда
+    game.undo();
+    updateFirebase();
+};
+
+function updateFirebase() {
     set(gameRef, {
         fen: game.fen(),
-        turn: game.turn()
+        turn: game.turn(),
+        players: { white: true, black: true } // Сохраняем состояние игроков
     });
 }
 
@@ -49,36 +86,16 @@ onValue(gameRef, (snapshot) => {
 });
 
 function updateStatus() {
-    let status = '';
     const moveColor = (game.turn() === 'b') ? 'Черных' : 'Белых';
-
-    if (game.in_checkmate()) {
-        status = `Мат! ${moveColor} проиграли.`;
-    } else if (game.in_draw()) {
-        status = 'Ничья!';
-    } else {
-        status = `Ход ${moveColor}`;
-        if (game.in_check()) status += ' (Шах!)';
-    }
-    statusEl.innerText = status;
+    let status = game.in_checkmate() ? `Мат! ${moveColor} проиграли.` : `Ход ${moveColor}`;
+    if (game.in_check()) status += ' (Шах!)';
+    document.getElementById('status').innerText = status;
 }
 
-// 3. Создание доски
-// Добавим проверку, загружена ли библиотека Chessboard
-if (typeof Chessboard === 'undefined') {
-    console.error("Ошибка: Библиотека Chessboard не загружена!");
-} else {
-    board = Chessboard('myBoard', {
-        draggable: true,
-        position: 'start',
-        onDrop: onDrop,
-        pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
-    });
-    console.log("Доска инициализирована");
-}
-
-document.getElementById('room-link').onclick = function() {
-    this.select();
-    document.execCommand("copy");
-    alert("Ссылка скопирована!");
-};
+board = Chessboard('myBoard', {
+    draggable: true,
+    position: 'start',
+    onDragStart: onDragStart, // Добавили проверку начала перетаскивания
+    onDrop: onDrop,
+    pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+});
