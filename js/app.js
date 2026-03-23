@@ -11,8 +11,17 @@ const loginBtn = document.getElementById('login-btn');
 const logoutBtn = document.getElementById('logout-btn');
 const userInfo = document.getElementById('user-info');
 
-loginBtn.onclick = () => signInWithPopup(auth, provider);
-logoutBtn.onclick = () => signOut(auth);
+// Логика входа
+loginBtn.addEventListener('click', () => {
+    console.log("Нажата кнопка входа");
+    signInWithPopup(auth, provider)
+        .then((result) => console.log("Успешный вход:", result.user.displayName))
+        .catch((error) => console.error("Ошибка входа:", error.message));
+});
+
+logoutBtn.addEventListener('click', () => {
+    signOut(auth).then(() => console.log("Выход выполнен"));
+});
 
 onAuthStateChanged(auth, (user) => {
     if (user) {
@@ -45,11 +54,8 @@ let game = new ChessInstance();
 let board = null;
 let playerColor = null;
 
-// UI элементы
 const statusEl = document.getElementById('status');
 const modal = document.getElementById('game-modal');
-const modalTitle = document.getElementById('modal-title');
-const modalDesc = document.getElementById('modal-desc');
 const resignBtn = document.getElementById('resign-btn');
 const rematchBtn = document.getElementById('rematch-btn');
 const undoBtn = document.getElementById('undo-btn');
@@ -65,7 +71,6 @@ runTransaction(playersRef, (players) => {
     if (playerColor === 'b') update(gameRef, { gameState: 'playing' });
 });
 
-// Слушатель базы
 onValue(gameRef, (snapshot) => {
     const data = snapshot.val();
     if (!data) return;
@@ -101,14 +106,30 @@ function onDrop(source, target) {
         newState = 'game_over';
         msg = `Мат! Победили ${game.turn() === 'w' ? 'Черные' : 'Белые'}`;
         saveToHistory(msg);
-    } else if (game.in_draw()) {
-        newState = 'game_over';
-        msg = 'Ничья!';
-        saveToHistory(msg);
     }
-
     update(gameRef, { fen: game.fen(), turn: game.turn(), gameState: newState, message: msg });
 }
+
+// ИСПРАВЛЕННАЯ ОТМЕНА ХОДА
+undoBtn.addEventListener('click', () => {
+    console.log("Запрос на отмену хода");
+    game.undo(); // Отменяем наш ход
+    game.undo(); // Отменяем ход противника (обычно в шахматах онлайн отменяют сразу пару полуходов)
+    
+    board.position(game.fen()); // Обновляем доску визуально у себя
+    update(gameRef, { fen: game.fen(), turn: game.turn() }); // Синхронизируем с базой
+});
+
+resignBtn.onclick = () => {
+    const msg = `Игрок сдался. Победили ${playerColor === 'w' ? 'Черные' : 'Белые'}!`;
+    update(gameRef, { gameState: 'game_over', message: msg });
+    saveToHistory(msg);
+};
+
+rematchBtn.onclick = () => {
+    game.reset();
+    update(gameRef, { fen: game.fen(), turn: 'w', gameState: 'playing', message: '' });
+};
 
 function saveToHistory(msg) {
     if (currentUser) {
@@ -119,27 +140,11 @@ function saveToHistory(msg) {
 
 function showGameOver(msg) {
     modal.classList.remove('hidden');
-    modalTitle.innerText = 'Игра окончена';
-    modalDesc.innerText = msg;
+    document.getElementById('modal-title').innerText = 'Игра окончена';
+    document.getElementById('modal-desc').innerText = msg;
     resignBtn.classList.add('hidden');
     if (playerColor) rematchBtn.classList.remove('hidden');
 }
-
-resignBtn.onclick = () => {
-    const msg = `Игрок сдался. Победили ${playerColor === 'w' ? 'Черные' : 'Белые'}!`;
-    update(gameRef, { gameState: 'game_over', message: msg });
-    saveToHistory(msg);
-};
-
-undoBtn.onclick = () => {
-    game.undo();
-    update(gameRef, { fen: game.fen(), turn: game.turn() });
-};
-
-rematchBtn.onclick = () => {
-    game.reset();
-    update(gameRef, { fen: game.fen(), turn: 'w', gameState: 'playing', message: '' });
-};
 
 function updateStatusUI() {
     let status = `Ход: ${game.turn() === 'b' ? 'Черных' : 'Белых'}`;
