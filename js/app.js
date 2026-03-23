@@ -28,6 +28,7 @@ function setupAuth() {
             userInfo?.classList.remove('hidden');
             document.getElementById('user-name').innerText = user.displayName || user.email.split('@')[0];
             document.getElementById('user-photo').src = user.photoURL || 'https://via.placeholder.com/35';
+            // Если мы не в комнате, обновляем лобби
             if (!new URLSearchParams(window.location.search).get('room')) loadLobby(user);
         } else {
             authGroup?.classList.remove('hidden');
@@ -35,13 +36,9 @@ function setupAuth() {
         }
     });
 
-    // Google
     document.getElementById('login-google').onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
-    
-    // Apple
     document.getElementById('login-apple').onclick = () => signInWithPopup(auth, new OAuthProvider('apple.com'));
     
-    // Email Модалка
     const emailModal = document.getElementById('email-modal');
     document.getElementById('login-email-trigger').onclick = () => emailModal.classList.remove('hidden');
     document.getElementById('close-email-modal').onclick = () => emailModal.classList.add('hidden');
@@ -49,24 +46,21 @@ function setupAuth() {
     document.getElementById('email-auth-btn').onclick = async () => {
         const email = document.getElementById('email-input').value;
         const pass = document.getElementById('password-input').value;
-        const errEl = document.getElementById('email-error');
         try {
             await signInWithEmailAndPassword(auth, email, pass);
             emailModal.classList.add('hidden');
         } catch (err) {
-            if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
-                try {
-                    await createUserWithEmailAndPassword(auth, email, pass);
-                    emailModal.classList.add('hidden');
-                } catch (e) { errEl.innerText = "Ошибка: " + e.message; errEl.classList.remove('hidden'); }
-            } else { errEl.innerText = err.message; errEl.classList.remove('hidden'); }
+            if (err.code === 'auth/user-not-found') {
+                await createUserWithEmailAndPassword(auth, email, pass);
+                emailModal.classList.add('hidden');
+            } else { alert(err.message); }
         }
     };
 
     document.getElementById('logout-btn').onclick = () => signOut(auth).then(() => location.href = location.origin + location.pathname);
 }
 
-// --- ЛОББИ ---
+// --- ЛОББИ (ОБНОВЛЕННОЕ) ---
 function initLobby() {
     document.getElementById('lobby-section').classList.remove('hidden');
     document.getElementById('create-game-btn').onclick = () => {
@@ -76,17 +70,47 @@ function initLobby() {
 }
 
 function loadLobby(user) {
+    const list = document.getElementById('games-list');
     onValue(ref(db, `games`), (snap) => {
-        const list = document.getElementById('games-list');
         list.innerHTML = '';
         const games = snap.val();
-        if (!games) { list.innerHTML = "У вас пока нет активных игр"; return; }
-        Object.keys(games).forEach(id => {
-            const p = games[id].players;
+        if (!games) { list.innerHTML = "Нет активных партий"; return; }
+        
+        // Превращаем в массив для сортировки (активные выше)
+        const sortedGames = Object.entries(games).sort((a, b) => {
+            const statusA = a[1].gameState === 'game_over' ? 1 : 0;
+            const statusB = b[1].gameState === 'game_over' ? 1 : 0;
+            return statusA - statusB;
+        });
+
+        sortedGames.forEach(([id, data]) => {
+            const p = data.players;
             if (p && (p.white === user.uid || p.black === user.uid)) {
+                const isOver = data.gameState === 'game_over';
+                
+                // Определяем соперника
+                const opponentName = (p.white === user.uid) 
+                    ? (p.blackName || "Ожидание...") 
+                    : (p.whiteName || "Ожидание...");
+
+                // Формируем текст статуса
+                let statusText = isOver ? `🏁 ${data.message}` : "🟢 Идет игра";
+                if (!isOver && data.turn) {
+                    const myColor = p.white === user.uid ? 'w' : 'b';
+                    statusText += (data.turn === myColor) ? " (Ваш ход!)" : " (Ход соперника)";
+                }
+
                 const item = document.createElement('div');
-                item.className = 'game-item';
-                item.innerHTML = `<span>Партия ${id}</span> <button class="btn btn-success btn-sm">Войти</button>`;
+                item.className = `game-item ${isOver ? 'finished' : 'active'}`;
+                item.innerHTML = `
+                    <div class="game-info">
+                        <div class="game-opp">Против: <b>${opponentName}</b></div>
+                        <div class="game-status">${statusText}</div>
+                    </div>
+                    <button class="btn btn-sm ${isOver ? 'btn-outline' : 'btn-success'}">
+                        ${isOver ? 'Просмотр' : 'Играть'}
+                    </button>
+                `;
                 item.onclick = () => location.href = location.origin + location.pathname + `?room=${id}`;
                 list.appendChild(item);
             }
@@ -94,20 +118,22 @@ function loadLobby(user) {
     });
 }
 
-// --- ИГРА ---
+// --- ИГРА (С ЗАПИСЬЮ ИМЕН) ---
 async function initGame(roomId) {
     document.getElementById('game-section').classList.remove('hidden');
     
     const user = await new Promise(res => { const unsub = onAuthStateChanged(auth, u => { unsub(); res(u); })});
     const uid = user ? user.uid : 'anon';
+    const uName = user ? (user.displayName || user.email.split('@')[0]) : 'Аноним';
 
     const gameRef = ref(db, `games/${roomId}`);
     const playersRef = ref(db, `games/${roomId}/players`);
 
+    // Транзакция для корректного распределения ролей и ИМЕН
     await runTransaction(playersRef, (p) => {
-        if (!p) return { white: uid };
+        if (!p) return { white: uid, whiteName: uName };
         if (p.white === uid || p.black === uid) return;
-        if (!p.black) return { ...p, black: uid };
+        if (!p.black) return { ...p, black: uid, blackName: uName };
         return;
     });
 
@@ -130,19 +156,15 @@ async function initGame(roomId) {
     onValue(gameRef, (snap) => {
         const data = snap.val();
         if (!data) return;
-
-        // Синхронизация ходов
         if (data.pgn && data.pgn !== game.pgn()) {
             game.load_pgn(data.pgn);
             board.position(game.fen());
         }
-
-        // Логика запроса возврата хода (Takeback)
+        
+        // Takeback логика
         const requestBox = document.getElementById('takeback-request-box');
-        if (data.takebackRequest && data.takebackRequest.status === 'pending') {
-            if (data.takebackRequest.from !== auth.currentUser?.uid) {
-                requestBox.classList.remove('hidden');
-            }
+        if (data.takebackRequest?.status === 'pending' && data.takebackRequest.from !== auth.currentUser?.uid) {
+            requestBox.classList.remove('hidden');
         } else {
             requestBox.classList.add('hidden');
         }
@@ -152,6 +174,7 @@ async function initGame(roomId) {
 
     setupGameControls(gameRef, roomId);
 }
+
 
 function onSquareClick(square) {
     if (game.game_over() || !playerColor || game.turn() !== playerColor || pendingMove) return;
