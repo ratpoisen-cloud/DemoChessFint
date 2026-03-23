@@ -9,7 +9,7 @@ import { ref, set, onValue, runTransaction, update, get } from "https://www.gsta
 let board, game = new Chess(), playerColor = null, pendingMove = null, currentUser = null;
 let selectedSquare = null;
 
-// --- ЗАПУСК ---
+// --- ИНИЦИАЛИЗАЦИЯ ---
 window.addEventListener('DOMContentLoaded', () => {
     setupAuth();
     const urlParams = new URLSearchParams(window.location.search);
@@ -35,10 +35,13 @@ function setupAuth() {
         }
     });
 
+    // Google
     document.getElementById('login-google').onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
+    
+    // Apple
     document.getElementById('login-apple').onclick = () => signInWithPopup(auth, new OAuthProvider('apple.com'));
     
-    // Email модалка
+    // Email Модалка
     const emailModal = document.getElementById('email-modal');
     document.getElementById('login-email-trigger').onclick = () => emailModal.classList.remove('hidden');
     document.getElementById('close-email-modal').onclick = () => emailModal.classList.add('hidden');
@@ -51,11 +54,11 @@ function setupAuth() {
             await signInWithEmailAndPassword(auth, email, pass);
             emailModal.classList.add('hidden');
         } catch (err) {
-            if (err.code === 'auth/user-not-found') {
+            if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
                 try {
                     await createUserWithEmailAndPassword(auth, email, pass);
                     emailModal.classList.add('hidden');
-                } catch (e) { errEl.innerText = e.message; errEl.classList.remove('hidden'); }
+                } catch (e) { errEl.innerText = "Ошибка: " + e.message; errEl.classList.remove('hidden'); }
             } else { errEl.innerText = err.message; errEl.classList.remove('hidden'); }
         }
     };
@@ -77,7 +80,7 @@ function loadLobby(user) {
         const list = document.getElementById('games-list');
         list.innerHTML = '';
         const games = snap.val();
-        if (!games) { list.innerHTML = "Нет активных партий"; return; }
+        if (!games) { list.innerHTML = "У вас пока нет активных игр"; return; }
         Object.keys(games).forEach(id => {
             const p = games[id].players;
             if (p && (p.white === user.uid || p.black === user.uid)) {
@@ -94,43 +97,56 @@ function loadLobby(user) {
 // --- ИГРА ---
 async function initGame(roomId) {
     document.getElementById('game-section').classList.remove('hidden');
-    document.getElementById('room-link').value = window.location.href;
-
+    
     const user = await new Promise(res => { const unsub = onAuthStateChanged(auth, u => { unsub(); res(u); })});
     const uid = user ? user.uid : 'anon';
 
-    await runTransaction(ref(db, `games/${roomId}/players`), (p) => {
+    const gameRef = ref(db, `games/${roomId}`);
+    const playersRef = ref(db, `games/${roomId}/players`);
+
+    await runTransaction(playersRef, (p) => {
         if (!p) return { white: uid };
         if (p.white === uid || p.black === uid) return;
         if (!p.black) return { ...p, black: uid };
         return;
     });
 
-    const p = (await get(ref(db, `games/${roomId}/players`))).val();
+    const p = (await get(playersRef)).val();
     playerColor = p.white === uid ? 'w' : (p.black === uid ? 'b' : null);
 
     board = Chessboard('myBoard', {
-        draggable: false, // Мобильное управление через клики
+        draggable: false, 
         position: 'start',
         pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
     });
 
     $('#myBoard').on('click', '.square-55d63', function() {
-        const square = $(this).attr('data-square');
-        onSquareClick(square);
+        onSquareClick($(this).attr('data-square'));
     });
 
     if (playerColor === 'b') board.orientation('black');
     document.getElementById('user-color').innerText = playerColor === 'w' ? 'Белые' : (playerColor === 'b' ? 'Черные' : 'Зритель');
 
-    const gameRef = ref(db, `games/${roomId}`);
     onValue(gameRef, (snap) => {
         const data = snap.val();
         if (!data) return;
+
+        // Синхронизация ходов
         if (data.pgn && data.pgn !== game.pgn()) {
             game.load_pgn(data.pgn);
             board.position(game.fen());
         }
+
+        // Логика запроса возврата хода (Takeback)
+        const requestBox = document.getElementById('takeback-request-box');
+        if (data.takebackRequest && data.takebackRequest.status === 'pending') {
+            if (data.takebackRequest.from !== auth.currentUser?.uid) {
+                requestBox.classList.remove('hidden');
+            }
+        } else {
+            requestBox.classList.add('hidden');
+        }
+
         updateUI(data);
     });
 
@@ -169,42 +185,68 @@ function setupGameControls(gameRef, roomId) {
     document.getElementById('confirm-btn').onclick = () => {
         if (!pendingMove) return;
         const updateData = { pgn: game.pgn(), fen: game.fen(), turn: game.turn(), lastMoveBy: auth.currentUser?.uid };
-        if (game.game_over()) { updateData.gameState = 'game_over'; updateData.message = game.in_checkmate() ? 'Мат!' : 'Ничья!'; }
+        if (game.game_over()) { 
+            updateData.gameState = 'game_over'; 
+            updateData.message = game.in_checkmate() ? 'Мат!' : 'Ничья!'; 
+        }
         update(gameRef, updateData);
         pendingMove = null;
         document.getElementById('confirm-move-box').classList.add('hidden');
     };
 
-    // Отмена хода
+    // Отмена текущего выбора (✕)
     document.getElementById('undo-btn').onclick = () => {
-        game.undo(); board.position(game.fen());
+        game.undo();
+        board.position(game.fen());
         pendingMove = null;
         document.getElementById('confirm-move-box').classList.add('hidden');
+    };
+
+    // ЗАПРОС ВОЗВРАТА ХОДА (Takeback)
+    document.getElementById('takeback-btn').onclick = () => {
+        if (game.history().length === 0 || pendingMove) return;
+        update(gameRef, { takebackRequest: { from: auth.currentUser.uid, status: 'pending' } });
+        alert("Запрос на возврат хода отправлен...");
+    };
+
+    document.getElementById('takeback-accept').onclick = () => {
+        game.undo(); 
+        update(gameRef, {
+            pgn: game.pgn(), fen: game.fen(), turn: game.turn(),
+            takebackRequest: null 
+        });
+    };
+
+    document.getElementById('takeback-reject').onclick = () => {
+        update(gameRef, { takebackRequest: null });
     };
 
     // Сдаться
     document.getElementById('resign-btn').onclick = () => {
         if (confirm("Сдаться?")) {
             const win = playerColor === 'w' ? 'Черные' : 'Белые';
-            update(gameRef, { gameState: 'game_over', message: `${win} победили (сдача)` });
+            update(gameRef, { gameState: 'game_over', message: `${win} победили (соперник сдался)` });
         }
     };
 
+    // Навигация
     document.getElementById('exit-btn').onclick = () => location.href = location.origin + location.pathname;
     document.getElementById('modal-exit-btn').onclick = () => location.href = location.origin + location.pathname;
     
     document.getElementById('modal-rematch-btn').onclick = async () => {
         const p = (await get(ref(db, `games/${roomId}/players`))).val();
         await set(ref(db, `games/${roomId}/players`), { white: p.black || 'anon', black: p.white || 'anon' });
-        await update(gameRef, { pgn: '', fen: 'start', turn: 'w', gameState: 'playing' });
+        await update(gameRef, { pgn: '', fen: 'start', turn: 'w', gameState: 'playing', takebackRequest: null });
         location.reload();
     };
 
-    document.getElementById('room-link').onclick = function() { this.select(); document.execCommand('copy'); alert('Скопировано!'); };
+    const linkEl = document.getElementById('room-link');
+    linkEl.value = window.location.href;
+    linkEl.onclick = function() { this.select(); document.execCommand('copy'); alert('Ссылка скопирована!'); };
 }
 
 function updateUI(data) {
-    document.getElementById('status').innerText = `Ход: ${game.turn() === 'w' ? 'Белых' : 'Черных'}`;
+    document.getElementById('status').innerText = `Ход: ${game.turn() === 'w' ? 'Белых' : 'Черных'}${game.in_check() ? ' (Шах!)' : ''}`;
     const moves = document.getElementById('move-list');
     if (moves) moves.innerHTML = game.history().map((m, i) => (i%2===0 ? `<span>${i/2+1}.</span>` : '') + `<b>${m}</b>`).join(' ');
     
