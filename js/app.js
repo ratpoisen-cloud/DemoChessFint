@@ -1,9 +1,10 @@
 import { db, auth } from './firebase-config.js';
-import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { signInWithPopup, GoogleAuthProvider, OAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { ref, set, onValue, runTransaction, update, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 const provider = new GoogleAuthProvider();
 let board, game = new Chess(), playerColor = null, pendingMove = null, currentUser = null;
+let selectedSquare = null; // Храним выбранное поле
 
 // --- ЗАПУСК ---
 window.addEventListener('DOMContentLoaded', () => {
@@ -13,28 +14,46 @@ window.addEventListener('DOMContentLoaded', () => {
     if (roomId) initGame(roomId); else initLobby();
 });
 
-// --- АВТОРИЗАЦИЯ ---
+// --- АВТОРИЗАЦИЯ (с модалкой Email) ---
 function setupAuth() {
-    const loginBtn = document.getElementById('login-btn');
-    const logoutBtn = document.getElementById('logout-btn');
-
+    const authGroup = document.getElementById('auth-buttons');
+    const userInfo = document.getElementById('user-info');
+    const emailModal = document.getElementById('email-modal');
+    
     onAuthStateChanged(auth, (user) => {
         currentUser = user;
-        const userInfo = document.getElementById('user-info');
         if (user) {
-            userInfo.classList.remove('hidden');
-            loginBtn.classList.add('hidden');
-            document.getElementById('user-name').innerText = user.displayName.split(' ')[0];
-            document.getElementById('user-photo').src = user.photoURL;
+            authGroup?.classList.add('hidden');
+            userInfo?.classList.remove('hidden');
+            document.getElementById('user-name').innerText = user.displayName || user.email.split('@')[0];
+            document.getElementById('user-photo').src = user.photoURL || 'https://via.placeholder.com/35';
             if (!new URLSearchParams(window.location.search).get('room')) loadLobby(user);
         } else {
-            userInfo.classList.add('hidden');
-            loginBtn.classList.remove('hidden');
+            authGroup?.classList.remove('hidden');
+            userInfo?.classList.add('hidden');
         }
     });
 
-    loginBtn.onclick = () => signInWithPopup(auth, provider).catch(err => console.error("Auth Error:", err));
-    logoutBtn.onclick = () => signOut(auth).then(() => {
+    document.getElementById('login-google').onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
+    document.getElementById('login-apple').onclick = () => signInWithPopup(auth, new OAuthProvider('apple.com'));
+    document.getElementById('login-email-trigger').onclick = () => emailModal.classList.remove('hidden');
+    document.getElementById('close-email-modal').onclick = () => emailModal.classList.add('hidden');
+
+    document.getElementById('email-auth-btn').onclick = async () => {
+        const email = document.getElementById('email-input').value;
+        const pass = document.getElementById('password-input').value;
+        try {
+            await signInWithEmailAndPassword(auth, email, pass);
+            emailModal.classList.add('hidden');
+        } catch (err) {
+            if (err.code === 'auth/user-not-found') {
+                await createUserWithEmailAndPassword(auth, email, pass);
+                emailModal.classList.add('hidden');
+            } else { alert(err.message); }
+        }
+    };
+
+    document.getElementById('logout-btn').onclick = () => signOut(auth).then(() => {
         window.location.href = window.location.origin + window.location.pathname;
     });
 }
@@ -54,7 +73,6 @@ function loadLobby(user) {
         list.innerHTML = '';
         const games = snap.val();
         if (!games) { list.innerHTML = "Нет активных игр"; return; }
-        
         Object.keys(games).forEach(id => {
             const p = games[id].players;
             if (p && (p.white === user.uid || p.black === user.uid)) {
@@ -68,21 +86,17 @@ function loadLobby(user) {
     });
 }
 
-// --- ИГРА ---
+// --- ИГРА (НОВАЯ ЛОГИКА КЛИКОВ) ---
 async function initGame(roomId) {
     document.getElementById('game-section').classList.remove('hidden');
     document.getElementById('room-link').value = window.location.href;
 
     const user = await new Promise(resolve => {
-        const unsubscribe = onAuthStateChanged(auth, u => {
-            unsubscribe();
-            resolve(u);
-        });
+        const unsubscribe = onAuthStateChanged(auth, u => { unsubscribe(); resolve(u); });
     });
 
     const uid = user ? user.uid : 'anon';
     const playersRef = ref(db, `games/${roomId}/players`);
-    
     await runTransaction(playersRef, (p) => {
         if (!p) return { white: uid };
         if (p.white === uid || p.black === uid) return; 
@@ -92,15 +106,19 @@ async function initGame(roomId) {
 
     const pSnap = await get(playersRef);
     const p = pSnap.val();
-    if (p.white === uid) playerColor = 'w';
-    else if (p.black === uid) playerColor = 'b';
+    playerColor = (p.white === uid) ? 'w' : (p.black === uid ? 'b' : null);
 
+    // Настройка доски БЕЗ перетаскивания
     board = Chessboard('myBoard', {
-        draggable: true,
+        draggable: false, // ОТКЛЮЧАЕМ ТАЩЕНИЕ
         position: 'start',
-        onDragStart,
-        onDrop,
         pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+    });
+
+    // Добавляем обработчик клика на поля
+    $('#myBoard').on('click', '.square-55d63', function() {
+        const square = $(this).attr('data-square');
+        onSquareClick(square);
     });
 
     if (playerColor === 'b') board.orientation('black');
@@ -120,27 +138,57 @@ async function initGame(roomId) {
     setupGameControls(gameRef, roomId);
 }
 
-function onDragStart(source, piece) {
-    if (game.game_over() || !playerColor || pendingMove) return false;
-    if ((playerColor === 'w' && piece.search(/^b/) !== -1) ||
-        (playerColor === 'b' && piece.search(/^w/) !== -1) ||
-        (game.turn() !== playerColor)) return false;
+function onSquareClick(square) {
+    if (game.game_over() || !playerColor || game.turn() !== playerColor || pendingMove) return;
+
+    // 1. Если мы нажимаем на ту же фигуру — снимаем выделение
+    if (selectedSquare === square) {
+        removeHighlight();
+        selectedSquare = null;
+        return;
+    }
+
+    // 2. Пробуем сделать ход
+    if (selectedSquare) {
+        const move = game.move({ from: selectedSquare, to: square, promotion: 'q' });
+        
+        if (move) {
+            // Ход возможен!
+            pendingMove = move;
+            board.position(game.fen());
+            document.getElementById('confirm-move-box').classList.remove('hidden');
+            removeHighlight();
+            selectedSquare = null;
+        } else {
+            // Если ход невозможен, проверяем, не выбрали ли мы другую свою фигуру
+            const piece = game.get(square);
+            if (piece && piece.color === playerColor) {
+                selectSquare(square);
+            }
+        }
+    } else {
+        // 3. Выбираем фигуру своего цвета
+        const piece = game.get(square);
+        if (piece && piece.color === playerColor) {
+            selectSquare(square);
+        }
+    }
 }
 
-function onDrop(source, target) {
-    const move = game.move({ from: source, to: target, promotion: 'q' });
-    if (!move) return 'snapback';
-    
-    pendingMove = move;
-    document.getElementById('confirm-move-box').classList.remove('hidden');
+function selectSquare(square) {
+    removeHighlight();
+    selectedSquare = square;
+    $(`#myBoard .square-${square}`).addClass('highlight-selected');
+}
+
+function removeHighlight() {
+    $('#myBoard .square-55d63').removeClass('highlight-selected');
 }
 
 function setupGameControls(gameRef, roomId) {
     document.getElementById('confirm-btn').onclick = () => {
         const updateData = { 
-            pgn: game.pgn(), 
-            fen: game.fen(), 
-            turn: game.turn(), 
+            pgn: game.pgn(), fen: game.fen(), turn: game.turn(), 
             lastMoveBy: auth.currentUser?.uid 
         };
         if (game.game_over()) {
@@ -158,36 +206,15 @@ function setupGameControls(gameRef, roomId) {
         document.getElementById('confirm-move-box').classList.add('hidden');
     };
 
-    document.getElementById('modal-rematch-btn').onclick = async () => {
-        const snap = await get(ref(db, `games/${roomId}/players`));
-        const p = snap.val();
-        await set(ref(db, `games/${roomId}/players`), { white: p.black || 'anon', black: p.white || 'anon' });
-        await update(gameRef, { pgn: '', fen: 'start', turn: 'w', gameState: 'playing' });
-        location.reload();
-    };
-
     document.getElementById('exit-btn').onclick = () => {
         window.location.href = window.location.origin + window.location.pathname;
-    };
-    
-    document.getElementById('room-link').onclick = function() {
-        this.select(); document.execCommand('copy');
-        alert('Ссылка скопирована!');
     };
 }
 
 function updateUI(data) {
     const status = document.getElementById('status');
-    if (status) status.innerText = `Ход: ${game.turn() === 'w' ? 'Белых' : 'Черных'}${game.in_check() ? ' (Шах!)' : ''}`;
+    if (status) status.innerText = `Ход: ${game.turn() === 'w' ? 'Белых' : 'Черных'}`;
     
-    const moveList = document.getElementById('move-list');
-    if (moveList) {
-        moveList.innerHTML = game.history().map((m, i) => 
-            (i % 2 === 0 ? `<span class="move-num">${Math.floor(i/2)+1}.</span>` : '') + `<span class="move-item">${m}</span>`
-        ).join(' ');
-        moveList.scrollTop = moveList.scrollHeight;
-    }
-
     if (data.gameState === 'game_over') {
         document.getElementById('game-modal').classList.remove('hidden');
         document.getElementById('modal-desc').innerText = data.message;
