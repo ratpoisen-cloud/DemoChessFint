@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fentanyl Chess Online</title>
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
     <link rel="stylesheet" href="css/style.css">
@@ -15,7 +15,11 @@
                 <span id="user-name"></span>
                 <button id="logout-btn" class="btn btn-sm">Выйти</button>
             </div>
-            <button id="login-btn" class="btn btn-success">Войти через Google</button>
+            <div id="auth-buttons" class="auth-group">
+                <button id="login-google" class="btn btn-google">Google</button>
+                <button id="login-apple" class="btn btn-dark">Apple</button>
+                <button id="login-email-trigger" class="btn btn-outline">Email</button>
+            </div>
         </div>
 
         <div id="lobby-section" class="card hidden">
@@ -27,22 +31,21 @@
         <div id="game-section" class="hidden">
             <div class="game-layout">
                 <div class="board-area">
-                    <div class="status-box"><div id="status">Загрузка...</div></div>
+                    <div class="status-box">
+                        <div id="status">Ожидание...</div>
+                        <div id="user-color" class="badge"></div>
+                    </div>
                     
-                    <div id="myBoard">
-                        <div id="confirm-move-box" class="confirm-overlay hidden">
-                            <button id="confirm-btn" class="btn-round btn-success" title="Подтвердить ход">✓</button>
-                            <button id="cancel-btn" class="btn-round btn-danger" title="Отменить">✕</button>
-                        </div>
+                    <div id="myBoard" style="width: 100%"></div>
+
+                    <div id="confirm-move-box" class="confirm-overlay hidden">
+                        <button id="confirm-btn" class="btn-round btn-success">✓</button>
+                        <button id="undo-btn" class="btn-round btn-danger">✕</button>
                     </div>
 
                     <div class="controls">
-                        <span>Вы: <strong id="user-color">...</strong></span>
-                        <div class="buttons-group">
-                            <button id="undo-btn" class="btn">Отмена</button>
-                            <button id="resign-btn" class="btn btn-danger">Сдаться</button>
-                            <button id="exit-btn" class="btn">В лобби</button>
-                        </div>
+                        <button id="resign-btn" class="btn btn-danger">Сдаться</button>
+                        <button id="exit-btn" class="btn">В лобби</button>
                     </div>
                 </div>
 
@@ -57,12 +60,25 @@
             </div>
         </div>
 
+        <div id="email-modal" class="modal hidden">
+            <div class="modal-content auth-modal">
+                <h3>Вход / Регистрация</h3>
+                <input type="email" id="email-input" placeholder="Ваша почта" class="input-field">
+                <input type="password" id="password-input" placeholder="Пароль" class="input-field">
+                <div class="modal-buttons">
+                    <button id="email-auth-btn" class="btn btn-success">Войти</button>
+                    <button id="close-email-modal" class="btn">Отмена</button>
+                </div>
+                <p id="email-error" class="error-text hidden"></p>
+            </div>
+        </div>
+
         <div id="game-modal" class="modal hidden">
             <div class="modal-content">
                 <h2 id="modal-title">Игра окончена</h2>
                 <p id="modal-desc"></p>
                 <div class="modal-buttons">
-                    <button id="modal-rematch-btn" class="btn btn-success">Реванш (смена сторон)</button>
+                    <button id="modal-rematch-btn" class="btn btn-success">Реванш</button>
                     <button id="modal-exit-btn" class="btn">В лобби</button>
                 </div>
             </div>
