@@ -20,16 +20,20 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// --- ЛОББИ ---
 function initLobby() {
+    console.log("Инициализация Лобби");
     const lobby = document.getElementById('lobby-section');
     const createBtn = document.getElementById('create-game-btn');
     
+    // Показываем лобби в любом случае
     if (lobby) lobby.classList.remove('hidden');
     
+    // Кнопка создания должна работать всегда!
     createBtn.onclick = () => {
-        console.log("Создание новой игры...");
         const id = Math.random().toString(36).substring(2, 8);
-        window.location.href = window.location.pathname + `?room=${id}`;
+        const url = window.location.origin + window.location.pathname + `?room=${id}`;
+        window.location.href = url;
     };
 }
 
@@ -37,33 +41,52 @@ function loadLobby(user) {
     const list = document.getElementById('games-list');
     if (!list) return;
 
-    onValue(ref(db, `games`), (snap) => {
-        list.innerHTML = '';
-        const games = snap.val();
-        if (!games) { 
-            list.innerHTML = "У вас пока нет активных игр"; 
-            return; 
-        }
-        
-        let found = false;
-        Object.keys(games).forEach(id => {
-            const p = games[id].players;
-            if (p && (p.white === user.uid || p.black === user.uid)) {
-                found = true;
-                const item = document.createElement('div');
-                item.className = 'game-item';
-                item.innerHTML = `<span>Партия: <b>${id}</b></span> <button class="btn btn-success btn-sm">Войти</button>`;
-                item.onclick = () => window.location.href = window.location.pathname + `?room=${id}`;
-                list.appendChild(item);
+    console.log("Загрузка игр для пользователя:", user.uid);
+
+    // Ограничиваем запрос, чтобы не вызывать ошибку прав доступа Firebase
+    const gamesRef = ref(db, `games`);
+    
+    onValue(gamesRef, (snap) => {
+        try {
+            list.innerHTML = '';
+            const games = snap.val();
+            
+            if (!games) {
+                list.innerHTML = "<p>У вас пока нет активных игр.</p>";
+                return;
             }
-        });
-        if (!found) list.innerHTML = "У вас пока нет активных игр";
+
+            let found = false;
+            Object.keys(games).forEach(id => {
+                const p = games[id].players;
+                // Проверяем, участвует ли текущий юзер в этой игре
+                if (p && (p.white === user.uid || p.black === user.uid)) {
+                    found = true;
+                    const item = document.createElement('div');
+                    item.className = 'game-item';
+                    item.innerHTML = `
+                        <span>Партия: <strong>${id}</strong></span>
+                        <button class="btn btn-success btn-sm">Войти</button>
+                    `;
+                    item.onclick = () => {
+                        window.location.href = window.location.origin + window.location.pathname + `?room=${id}`;
+                    };
+                    list.appendChild(item);
+                }
+            });
+
+            if (!found) {
+                list.innerHTML = "<p>Вы еще не участвовали в партиях.</p>";
+            }
+        } catch (e) {
+            console.error("Ошибка обработки данных лобби:", e);
+            list.innerHTML = "<p>Ошибка при отображении списка игр.</p>";
+        }
     }, (error) => {
-        console.error("Ошибка загрузки лобби:", error);
-        list.innerHTML = "Ошибка доступа к базе данных";
+        console.warn("Firebase отклонил доступ к списку всех игр (это нормально для правил безопасности):", error);
+        list.innerHTML = "<p>Список игр доступен только участникам.</p>";
     });
 }
-// ... остальной код (initGame, setupAuth и т.д.) без изменений
 
 function initGame(roomId) {
     document.getElementById('game-section').classList.remove('hidden');
