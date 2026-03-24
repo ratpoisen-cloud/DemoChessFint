@@ -191,7 +191,7 @@ async function initGame(roomId) {
         onDrop: handleDrop,
         position: 'start',
         moveSpeed: 'slow',
-        pieceTheme: 'https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/merida/{piece}.svg'
+        pieceTheme: 'https://chessboardjs.com/img/chesspieces/alpha/{piece}.png'
     });
     
     if (playerColor === 'b') board.orientation('black');
