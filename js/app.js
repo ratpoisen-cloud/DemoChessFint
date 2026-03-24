@@ -544,7 +544,3 @@ function updateTurnIndicator(isMyTurn) {
     indicator.className = isMyTurn ? 'turn-indicator my-turn' : 'turn-indicator opponent-turn';
     textEl.innerText = isMyTurn ? '🎯 ВАШ ХОД' : '⏳ Ход соперника';
 }
-    
-    indicator.className = isMyTurn ? 'turn-indicator my-turn' : 'turn-indicator opponent-turn';
-    textEl.innerText = isMyTurn ? '🎯 ВАШ ХОД' : '⏳ Ход соперника';
-}
