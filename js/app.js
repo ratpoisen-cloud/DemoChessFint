@@ -141,15 +141,11 @@ async function initGame(roomId) {
     const p = (await get(playersRef)).val();
     playerColor = p.white === uid ? 'w' : (p.black === uid ? 'b' : null);
 
-    // Внутри функции initGame(roomId)
-board = Chessboard('myBoard', {
-    draggable: false, 
-    position: 'start',
-    // Используем современный набор cburnett
-    pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
-    moveSpeed: 'slow',
-    appearSpeed: 'slow'
-});
+    board = Chessboard('myBoard', {
+        draggable: false, 
+        position: 'start',
+        pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+    });
 
     $('#myBoard').on('click', '.square-55d63', function() {
         onSquareClick($(this).attr('data-square'));
