@@ -320,18 +320,22 @@ function removeHighlights() {
     $('#myBoard .square-55d63').removeClass('highlight-selected highlight-possible'); 
 }
 
-// Десктопная логика через drag-and-drop
 function handleDrop(source, target) {
     if (game.game_over() || !playerColor || game.turn() !== playerColor || pendingMove) return 'snapback';
+
+    const move = game.move({ from: source, to: target, promotion: 'q' });
+    if (move === null) return 'snapback';
+
+    pendingMove = move;
     
-    const testMove = game.move({ from: source, to: target, promotion: 'q', verbose: true });
-    if (testMove === null) return 'snapback';
-    
-    game.undo();
-    pendingMove = testMove;
-    setTimeout(() => board.position(game.fen(), true), 100);
+    // Обновляем доску принудительно ТОЛЬКО для рокировки или превращения пешки.
+    // Обычные ходы библиотека отрисовывает сама без задержек.
+    if (move.flags.includes('k') || move.flags.includes('q') || move.flags.includes('p') || move.promotion) {
+        board.position(game.fen(), false); // false = без анимации, чтобы не дергалось
+    }
+
     document.getElementById('confirm-move-box').classList.remove('hidden');
-    return 'snapback';
+    removeHighlights();
 }
 
 function setupGameControls(gameRef, roomId) {
