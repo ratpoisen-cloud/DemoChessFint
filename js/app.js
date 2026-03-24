@@ -39,22 +39,15 @@ function setupAuth() {
         }
     });
 
-    // Google
-    document.getElementById('login-google').onclick = () => 
-        signInWithPopup(auth, new GoogleAuthProvider());
+    document.getElementById('login-google').onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
 
-    // Email
     const emailModal = document.getElementById('email-modal');
-    document.getElementById('login-email-trigger').onclick = () => 
-        emailModal.classList.remove('hidden');
-    
-    document.getElementById('close-email-modal').onclick = () => 
-        emailModal.classList.add('hidden');
+    document.getElementById('login-email-trigger').onclick = () => emailModal.classList.remove('hidden');
+    document.getElementById('close-email-modal').onclick = () => emailModal.classList.add('hidden');
     
     document.getElementById('email-auth-btn').onclick = async () => {
         const email = document.getElementById('email-input').value.trim();
         const pass = document.getElementById('password-input').value;
-        
         if (!email || !pass) return alert("Введите email и пароль");
 
         try {
@@ -74,11 +67,10 @@ function setupAuth() {
         }
     };
 
-    document.getElementById('logout-btn').onclick = () => 
-        signOut(auth).then(() => location.reload());
+    document.getElementById('logout-btn').onclick = () => signOut(auth).then(() => location.reload());
 }
 
-// --- ЛОББИ ---
+// --- ЛОББИ (без изменений) ---
 function initLobby() {
     document.getElementById('lobby-section').classList.remove('hidden');
     document.getElementById('create-game-btn').onclick = () => {
@@ -92,10 +84,7 @@ function loadLobby(user) {
     onValue(ref(db, `games`), (snap) => {
         list.innerHTML = '';
         const games = snap.val();
-        if (!games) {
-            list.innerHTML = "Нет активных партий";
-            return;
-        }
+        if (!games) { list.innerHTML = "Нет активных партий"; return; }
 
         const sortedGames = Object.entries(games).sort((a, b) => {
             const statusA = a[1].gameState === 'game_over' ? 1 : 0;
@@ -160,7 +149,6 @@ async function initGame(roomId) {
     const p = (await get(playersRef)).val();
     playerColor = p.white === uid ? 'w' : (p.black === uid ? 'b' : null);
 
-    // Создаём доску
     board = Chessboard('myBoard', {
         draggable: !isMobile,
         onDrop: isMobile ? undefined : handleDrop,
@@ -171,7 +159,6 @@ async function initGame(roomId) {
     if (playerColor === 'b') board.orientation('black');
     document.getElementById('user-color').innerText = playerColor === 'w' ? 'Белые' : 'Черные';
 
-    // Мобильный режим — клики
     if (isMobile) {
         $('#myBoard').on('click', '.square-55d63', function() {
             onSquareClick($(this).attr('data-square'));
@@ -200,11 +187,9 @@ async function initGame(roomId) {
     setupGameControls(gameRef, roomId);
 }
 
-// Десктоп: перетаскивание
+// ==================== ДЕСКТОП: Перетаскивание ====================
 function handleDrop(source, target) {
-    if (game.game_over() || !playerColor || game.turn() !== playerColor || pendingMove) {
-        return 'snapback';
-    }
+    if (game.game_over() || !playerColor || game.turn() !== playerColor || pendingMove) return 'snapback';
 
     const move = game.move({ from: source, to: target, promotion: 'q' });
     if (move === null) return 'snapback';
@@ -213,49 +198,65 @@ function handleDrop(source, target) {
     document.getElementById('confirm-move-box').classList.remove('hidden');
 }
 
-// Мобильный: клики
+// ==================== МОБИЛЬНЫЙ: Выбор + подсветка ходов ====================
 function onSquareClick(square) {
     if (game.game_over() || !playerColor || game.turn() !== playerColor || pendingMove) return;
 
     if (selectedSquare === square) {
-        removeHighlight();
+        removeHighlights();
         selectedSquare = null;
-    } else if (selectedSquare) {
+        return;
+    }
+
+    if (selectedSquare) {
         const move = game.move({ from: selectedSquare, to: square, promotion: 'q' });
         if (move) {
             pendingMove = move;
             board.position(game.fen());
             document.getElementById('confirm-move-box').classList.remove('hidden');
-            removeHighlight();
+            removeHighlights();
             selectedSquare = null;
         } else {
             const piece = game.get(square);
-            if (piece && piece.color === playerColor) selectSquare(square);
+            if (piece && piece.color === playerColor) {
+                selectSquare(square);
+            } else {
+                removeHighlights();
+                selectedSquare = null;
+            }
         }
     } else {
         const piece = game.get(square);
-        if (piece && piece.color === playerColor) selectSquare(square);
+        if (piece && piece.color === playerColor) {
+            selectSquare(square);
+        }
     }
 }
 
-function selectSquare(s) {
-    removeHighlight();
-    selectedSquare = s;
-    $(`.square-${s}`).addClass('highlight-selected');
+function selectSquare(square) {
+    removeHighlights();
+    selectedSquare = square;
+    $(`.square-${square}`).addClass('highlight-selected');
+
+    // Подсветка возможных ходов
+    const moves = game.moves({ square: square, verbose: true });
+    moves.forEach(m => {
+        $(`.square-${m.to}`).addClass('highlight-possible');
+    });
 }
 
-function removeHighlight() {
-    $('.square-55d63').removeClass('highlight-selected');
+function removeHighlights() {
+    $('.square-55d63').removeClass('highlight-selected highlight-possible');
 }
 
-// Управление игрой
+// ==================== Управление игрой ====================
 function setupGameControls(gameRef, roomId) {
     document.getElementById('confirm-btn').onclick = () => {
         if (!pendingMove) return;
         const updateData = { pgn: game.pgn(), fen: game.fen(), turn: game.turn() };
         if (game.game_over()) {
             updateData.gameState = 'game_over';
-            updateData.message = game.in_checkmate() ? 'Мат!' : 'Ничья!';
+            updateData.message = getGameResultMessage();
         }
         update(gameRef, updateData);
         pendingMove = null;
@@ -267,6 +268,7 @@ function setupGameControls(gameRef, roomId) {
         board.position(game.fen());
         pendingMove = null;
         document.getElementById('confirm-move-box').classList.add('hidden');
+        removeHighlights();
     };
 
     document.getElementById('takeback-btn').onclick = () => {
@@ -277,17 +279,10 @@ function setupGameControls(gameRef, roomId) {
 
     document.getElementById('takeback-accept').onclick = () => {
         game.undo();
-        update(gameRef, {
-            pgn: game.pgn(),
-            fen: game.fen(),
-            turn: game.turn(),
-            takebackRequest: null
-        });
+        update(gameRef, { pgn: game.pgn(), fen: game.fen(), turn: game.turn(), takebackRequest: null });
     };
 
-    document.getElementById('takeback-reject').onclick = () => {
-        update(gameRef, { takebackRequest: null });
-    };
+    document.getElementById('takeback-reject').onclick = () => update(gameRef, { takebackRequest: null });
 
     document.getElementById('resign-btn').onclick = () => {
         if (confirm("Сдаться?")) {
@@ -308,11 +303,22 @@ function setupGameControls(gameRef, roomId) {
 
     const linkEl = document.getElementById('room-link');
     linkEl.value = window.location.href;
-    linkEl.onclick = function() { 
-        this.select(); 
-        document.execCommand('copy'); 
-        alert('Ссылка скопирована!'); 
-    };
+    linkEl.onclick = function() { this.select(); document.execCommand('copy'); alert('Ссылка скопирована!'); };
+}
+
+// Новые функции для правильного результата игры
+function getGameResultMessage() {
+    if (game.in_checkmate()) {
+        const winner = game.turn() === 'w' ? 'Черные' : 'Белые';
+        return `Мат! ${winner} победили`;
+    }
+    if (game.in_draw()) {
+        if (game.in_stalemate()) return "Ничья (пат)";
+        if (game.in_threefold_repetition()) return "Ничья (трёхкратное повторение)";
+        if (game.insufficient_material()) return "Ничья (недостаточно материала)";
+        return "Ничья";
+    }
+    return "Игра окончена";
 }
 
 function updateUI(data) {
