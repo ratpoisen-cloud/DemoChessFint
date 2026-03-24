@@ -4,7 +4,7 @@ import {
     signInWithEmailAndPassword, createUserWithEmailAndPassword,
     signOut, onAuthStateChanged 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { ref, set, onValue, runTransaction, update, get, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { ref, set, onValue, runTransaction, update, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 let board, game = new Chess(), playerColor = null, pendingMove = null, currentUser = null;
 let selectedSquare = null;
@@ -40,10 +40,8 @@ function setupAuth() {
         }
     });
 
-    // Google Login
     document.getElementById('login-google').onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
 
-    // Email Modal Controls
     const emailModal = document.getElementById('email-modal');
     const emailError = document.getElementById('email-error');
     
@@ -59,7 +57,6 @@ function setupAuth() {
     
     document.getElementById('close-email-modal').onclick = () => emailModal.classList.add('hidden');
 
-    // Кнопка: ВОЙТИ
     document.getElementById('login-email-btn').onclick = async () => {
         const email = document.getElementById('email-input').value.trim();
         const pass = document.getElementById('password-input').value;
@@ -71,18 +68,14 @@ function setupAuth() {
             document.getElementById('email-input').value = '';
             document.getElementById('password-input').value = '';
         } catch (err) {
-            console.error("Login Error:", err.code);
             if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found') {
                 showError("Неверная почта или пароль");
-            } else if (err.code === 'auth/wrong-password') {
-                showError("Неверный пароль");
             } else {
                 showError("Ошибка входа: " + err.message);
             }
         }
     };
 
-    // Кнопка: РЕГИСТРАЦИЯ
     document.getElementById('register-email-btn').onclick = async () => {
         const email = document.getElementById('email-input').value.trim();
         const pass = document.getElementById('password-input').value;
@@ -99,8 +92,6 @@ function setupAuth() {
         } catch (err) {
             if (err.code === 'auth/email-already-in-use') {
                 showError("Эта почта уже зарегистрирована");
-            } else if (err.code === 'auth/invalid-email') {
-                showError("Некорректный формат почты");
             } else {
                 showError("Ошибка регистрации: " + err.message);
             }
@@ -110,7 +101,6 @@ function setupAuth() {
     document.getElementById('logout-btn').onclick = () => signOut(auth).then(() => location.href = location.origin + location.pathname);
 }
 
-// --- ФУНКЦИЯ РЕЗУЛЬТАТА ИГРЫ ---
 function getGameResultMessage() {
     if (game.in_checkmate()) return `Мат! ${game.turn() === 'w' ? 'Черные' : 'Белые'} победили`;
     if (game.in_stalemate()) return "Пат! Ничья";
@@ -119,7 +109,6 @@ function getGameResultMessage() {
     return "Игра окончена";
 }
 
-// --- ЛОББИ ---
 function initLobby() {
     document.getElementById('lobby-section').classList.remove('hidden');
     document.getElementById('game-section').classList.add('hidden');
@@ -154,7 +143,6 @@ function loadLobby(user) {
     });
 }
 
-// --- ИГРА ---
 async function initGame(roomId) {
     document.getElementById('game-section').classList.remove('hidden');
     document.getElementById('lobby-section').classList.add('hidden');
@@ -166,7 +154,6 @@ async function initGame(roomId) {
     const gameRef = ref(db, `games/${roomId}`);
     const playersRef = ref(db, `games/${roomId}/players`);
     
-    // Проверка существования игры
     const gameCheck = await get(gameRef);
     if (!gameCheck.exists()) {
         await set(gameRef, { 
@@ -177,7 +164,6 @@ async function initGame(roomId) {
         });
     }
     
-    // Транзакция для назначения игроков
     try {
         await runTransaction(playersRef, (p) => {
             if (!p) return { white: uid, whiteName: uName };
@@ -210,11 +196,13 @@ async function initGame(roomId) {
     
     if (playerColor === 'b') board.orientation('black');
     
-    // Мобильные клики
-    $('#myBoard').off('click').on('click', '.square-55d63', function() {
-        if (!isMobile || !playerColor) return; 
-        handleSquareClick($(this).attr('data-square'));
-    });
+    // --- МОБИЛЬНАЯ ЛОГИКА: нажатие на фигуру -> подсветка, нажатие на поле -> ход ---
+    if (isMobile && playerColor) {
+        $('#myBoard').off('click').on('click', '.square-55d63', function() {
+            const square = $(this).attr('data-square');
+            handleMobileClick(square);
+        });
+    }
     
     // Синхронизация игры
     onValue(gameRef, (snap) => {
@@ -225,7 +213,7 @@ async function initGame(roomId) {
             board.position(game.fen(), true);
             pendingMove = null;
             document.getElementById('confirm-move-box').classList.add('hidden');
-            removeHighlights();
+            clearSelection();
         }
         updateUI(data);
     });
@@ -234,46 +222,87 @@ async function initGame(roomId) {
     currentRoomId = roomId;
 }
 
-function handleSquareClick(square) {
-    if (game.game_over() || !playerColor || game.turn() !== playerColor || pendingMove) return;
-    if (selectedSquare === square) { removeHighlights(); selectedSquare = null; return; }
+// --- МОБИЛЬНАЯ ЛОГИКА: выделение фигуры и подсветка ходов ---
+function handleMobileClick(square) {
+    // Проверки: игра не окончена, есть цвет игрока, ход игрока, нет ожидающего подтверждения хода
+    if (game.game_over()) return;
+    if (!playerColor) return;
+    if (game.turn() !== playerColor) return;
+    if (pendingMove) return;
+    
     const piece = game.get(square);
+    
+    // Случай 1: Уже есть выбранная фигура
     if (selectedSquare) {
-        if (piece && piece.color === playerColor) { selectSquare(square); return; }
+        // Если кликнули на ту же фигуру - снимаем выделение
+        if (selectedSquare === square) {
+            clearSelection();
+            return;
+        }
+        
+        // Пытаемся сделать ход
         const move = game.move({ from: selectedSquare, to: square, promotion: 'q', verbose: true });
+        
         if (move) {
+            // Ход валидный - сохраняем для подтверждения
             pendingMove = move;
             board.position(game.fen(), true);
             document.getElementById('confirm-move-box').classList.remove('hidden');
-            removeHighlights();
-            selectedSquare = null;
-        } else { removeHighlights(); selectedSquare = null; }
-    } else if (piece && piece.color === playerColor) { selectSquare(square); }
+            clearSelection();
+        } else {
+            // Ход невалидный - проверяем, может кликнули на другую свою фигуру
+            if (piece && piece.color === playerColor) {
+                // Выбираем новую фигуру
+                selectSquare(square);
+            } else {
+                // Кликнули на пустую клетку или фигуру соперника - сбрасываем выделение
+                clearSelection();
+            }
+        }
+    } 
+    // Случай 2: Нет выбранной фигуры
+    else {
+        // Если кликнули на свою фигуру - выделяем её
+        if (piece && piece.color === playerColor) {
+            selectSquare(square);
+        }
+        // Если кликнули на чужую фигуру или пустую клетку - ничего не делаем
+    }
 }
 
+// Выделение фигуры и подсветка доступных ходов
 function selectSquare(square) {
-    removeHighlights();
+    clearSelection();
     selectedSquare = square;
+    
+    // Подсветка выбранной клетки
     $(`.square-${square}`).addClass('highlight-selected');
+    
+    // Получаем все возможные ходы для выбранной фигуры
     const moves = game.moves({ square: square, verbose: true });
-    moves.forEach(m => $(`.square-${m.to}`).addClass('highlight-possible'));
+    moves.forEach(move => {
+        $(`.square-${move.to}`).addClass('highlight-possible');
+    });
+}
+
+// Сброс выделения и подсветки
+function clearSelection() {
+    selectedSquare = null;
+    removeHighlights();
 }
 
 function removeHighlights() { 
     $('#myBoard .square-55d63').removeClass('highlight-selected highlight-possible'); 
 }
 
+// Десктопная логика через drag-and-drop
 function handleDrop(source, target) {
     if (game.game_over() || !playerColor || game.turn() !== playerColor || pendingMove) return 'snapback';
     
-    // Создаем временный ход для проверки
     const testMove = game.move({ from: source, to: target, promotion: 'q', verbose: true });
     if (testMove === null) return 'snapback';
     
-    // Отменяем временный ход
     game.undo();
-    
-    // Сохраняем ход для подтверждения
     pendingMove = testMove;
     setTimeout(() => board.position(game.fen(), true), 100);
     document.getElementById('confirm-move-box').classList.remove('hidden');
@@ -285,7 +314,6 @@ function setupGameControls(gameRef, roomId) {
     document.getElementById('confirm-btn').onclick = () => {
         if (!pendingMove) return;
         
-        // Применяем ход
         game.move(pendingMove);
         const updateData = { pgn: game.pgn(), fen: game.fen(), turn: game.turn(), lastMove: Date.now() };
         
@@ -297,7 +325,7 @@ function setupGameControls(gameRef, roomId) {
         update(gameRef, updateData);
         pendingMove = null;
         document.getElementById('confirm-move-box').classList.add('hidden');
-        removeHighlights();
+        clearSelection();
     };
     
     // Отмена неподтвержденного хода
@@ -306,7 +334,7 @@ function setupGameControls(gameRef, roomId) {
             pendingMove = null;
             document.getElementById('confirm-move-box').classList.add('hidden');
             board.position(game.fen(), true);
-            removeHighlights();
+            clearSelection();
         }
     };
     
@@ -349,7 +377,7 @@ function setupGameControls(gameRef, roomId) {
         }
     };
     
-    // --- ЛОГИКА ЗАПРОСА ОТМЕНЫ ХОДА ---
+    // Запрос отмены хода
     document.getElementById('takeback-btn').onclick = () => {
         if (game.history().length === 0) {
             alert("Нет ходов для отмены");
@@ -360,9 +388,9 @@ function setupGameControls(gameRef, roomId) {
             return;
         }
         update(gameRef, { takebackRequest: { from: playerColor, timestamp: Date.now() } });
+        alert("Запрос отправлен сопернику");
     };
     
-    // Слушатель запроса на отмену
     const takebackRef = ref(db, `games/${roomId}/takebackRequest`);
     onValue(takebackRef, (snap) => {
         const request = snap.val();
@@ -372,7 +400,6 @@ function setupGameControls(gameRef, roomId) {
             return;
         }
         
-        // Если запрос от соперника и еще не обработан
         if (request.from !== playerColor && !request.answered) {
             document.getElementById('takeback-request-box').classList.remove('hidden');
             pendingTakeback = request;
@@ -389,6 +416,7 @@ function setupGameControls(gameRef, roomId) {
             });
             document.getElementById('takeback-request-box').classList.add('hidden');
             pendingTakeback = null;
+            clearSelection();
         }
     };
     
@@ -403,11 +431,9 @@ function setupGameControls(gameRef, roomId) {
         const modal = document.getElementById('game-modal');
         modal.classList.add('hidden');
         
-        // Создаем новую игру с теми же игроками, но меняем стороны
         const playersData = (await get(ref(db, `games/${roomId}/players`))).val();
         const newId = Math.random().toString(36).substring(2, 8);
         
-        // Меняем стороны для реванша
         await set(ref(db, `games/${newId}`), {
             players: {
                 white: playersData.black,
@@ -445,7 +471,6 @@ function updateUI(data) {
     
     updateTurnIndicator(isMyTurn);
     
-    // Обновление истории ходов
     const history = game.history();
     const moveListDiv = document.getElementById('move-list');
     if (moveListDiv) {
@@ -464,11 +489,9 @@ function updateUI(data) {
                 `;
             }
         }
-        // Автоскролл вниз
         moveListDiv.scrollTop = moveListDiv.scrollHeight;
     }
     
-    // Показ модального окна при окончании игры
     if (data.gameState === 'game_over' && document.getElementById('game-modal').classList.contains('hidden')) {
         document.getElementById('game-modal').classList.remove('hidden');
         document.getElementById('modal-title').innerHTML = '🏆 Игра окончена';
