@@ -321,9 +321,16 @@ function getGameResultMessage() {
     return "Игра окончена";
 }
 
+// ==================== Обновление интерфейса ====================
 function updateUI(data) {
-    document.getElementById('status').innerText = `Ход: ${game.turn() === 'w' ? 'Белых' : 'Черных'}${game.in_check() ? ' (Шах!)' : ''}`;
+    const isMyTurn = game.turn() === playerColor;
     
+    document.getElementById('status').innerText = 
+        `Ход: ${game.turn() === 'w' ? 'Белых' : 'Черных'}${game.in_check() ? ' (Шах!)' : ''}`;
+
+    // Обновляем красивый индикатор
+    updateTurnIndicator(isMyTurn);
+
     const moves = document.getElementById('move-list');
     moves.innerHTML = game.history().map((m, i) => 
         (i%2===0 ? `<span>${Math.floor(i/2)+1}.</span>` : '') + `<b>${m}</b>`
@@ -334,5 +341,20 @@ function updateUI(data) {
         document.getElementById('modal-desc').innerText = data.message;
     } else {
         document.getElementById('game-modal').classList.add('hidden');
+    }
+}
+
+function updateTurnIndicator(isMyTurn) {
+    const indicator = document.getElementById('turn-indicator');
+    const textEl = document.getElementById('turn-text');
+
+    if (isMyTurn) {
+        indicator.classList.remove('opponent-turn');
+        indicator.classList.add('my-turn');
+        textEl.innerHTML = '🎯 ВАШ ХОД';
+    } else {
+        indicator.classList.remove('my-turn');
+        indicator.classList.add('opponent-turn');
+        textEl.innerHTML = '⏳ Ход соперника';
     }
 }
