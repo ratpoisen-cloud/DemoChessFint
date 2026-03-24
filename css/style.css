@@ -297,3 +297,42 @@ body {
     background-color: rgba(0, 255, 0, 0.4) !important;
     box-shadow: inset 0 0 8px 3px rgba(0, 255, 0, 0.7);
 }
+/* Красивый индикатор хода */
+.turn-indicator {
+    margin-top: 12px;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-align: center;
+    transition: all 0.4s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    min-height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.turn-indicator.my-turn {
+    background: linear-gradient(135deg, #4caf50, #66bb6a);
+    color: white;
+    box-shadow: 0 0 20px rgba(76, 175, 80, 0.6);
+    animation: pulse 2s infinite;
+}
+
+.turn-indicator.opponent-turn {
+    background: #333;
+    color: #aaa;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+}
+
+/* Немного увеличиваем статус-бокс */
+.status-box {
+    flex-direction: column;
+    gap: 8px;
+}
