@@ -158,15 +158,42 @@ body {
     box-shadow: 0 15px 50px rgba(0,0,0,0.7);
 }
 
-/* Подтверждения */
+/* Измени эти блоки в своем style.css */
+
 .confirm-overlay {
     position: absolute;
-    top: 50%;
+    top: 65%; /* Опустили чуть ниже центра доски */
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 150;
     display: flex;
-    gap: 16px;
+    gap: 20px;
+    background: rgba(0,0,0,0.4); /* Добавили легкую подложку для читаемости */
+    padding: 15px;
+    border-radius: 50px;
+    backdrop-filter: blur(4px);
+}
+
+.btn-round {
+    width: 60px; /* Немного уменьшили размер */
+    height: 60px;
+    border-radius: 50%;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    border: 3px solid rgba(255,255,255,0.1);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+
+.btn-round:hover {
+    transform: scale(1.1);
+}
+
+/* Исправление для модального окна, чтобы оно не "мерцало" */
+.modal.hidden {
+    display: none !important;
 }
 
 .request-card {
