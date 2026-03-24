@@ -66,12 +66,14 @@ function setupAuth() {
         }
     };
 
-    document.getElementById('logout-btn').onclick = () => signOut(auth).then(() => location.reload());
+    document.getElementById('logout-btn').onclick = () => signOut(auth).then(() => location.href = location.origin + location.pathname);
 }
 
 // --- ЛОББИ ---
 function initLobby() {
     document.getElementById('lobby-section').classList.remove('hidden');
+    document.getElementById('game-section').classList.add('hidden'); // Гарантированно прячем игру
+    
     document.getElementById('create-game-btn').onclick = () => {
         const id = Math.random().toString(36).substring(2, 8);
         location.href = location.origin + location.pathname + `?room=${id}`;
@@ -173,8 +175,11 @@ async function initGame(roomId) {
             board.position(game.fen());
         }
 
+        const gameSection = document.getElementById('game-section');
+        const isGameActive = gameSection && !gameSection.classList.contains('hidden');
+        
         const requestBox = document.getElementById('takeback-request-box');
-        if (data.takebackRequest?.status === 'pending' && data.takebackRequest.from !== (currentUser?.uid || 'anon')) {
+        if (isGameActive && data.takebackRequest?.status === 'pending' && data.takebackRequest.from !== (currentUser?.uid || 'anon')) {
             requestBox.classList.remove('hidden');
         } else {
             requestBox.classList.add('hidden');
@@ -186,7 +191,7 @@ async function initGame(roomId) {
     setupGameControls(gameRef, roomId);
 }
 
-// ==================== ДЕСКТОП: Перетаскивание с рокировкой ====================
+// ==================== ДЕСКТОП: Перетаскивание ====================
 function handleDrop(source, target) {
     if (game.game_over() || !playerColor || game.turn() !== playerColor || pendingMove) return 'snapback';
 
@@ -346,7 +351,6 @@ function updateUI(data) {
     const currentTurn = game.turn();
     const isMyTurn = (playerColor === currentTurn);
 
-    // Обновляем статус только если элемент существует
     const statusEl = document.getElementById('status');
     if (statusEl) {
         statusEl.innerText = `Ход: ${currentTurn === 'w' ? 'Белых' : 'Черных'}${game.in_check() ? ' (Шах!)' : ''}`;
@@ -361,12 +365,10 @@ function updateUI(data) {
         ).join(' ');
     }
 
-    // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: 
-    // Показываем модальное окно только если активна секция игры
     const gameSection = document.getElementById('game-section');
-    const isGameVisible = gameSection && !gameSection.classList.contains('hidden');
+    const isGameActive = gameSection && !gameSection.classList.contains('hidden');
 
-    if (data.gameState === 'game_over' && isGameVisible) {
+    if (data.gameState === 'game_over' && isGameActive) {
         document.getElementById('game-modal').classList.remove('hidden');
         document.getElementById('modal-desc').innerText = data.message || getGameResultMessage();
     } else {
