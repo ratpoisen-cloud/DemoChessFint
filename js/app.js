@@ -191,7 +191,7 @@ async function initGame(roomId) {
         onDrop: handleDrop,
         position: 'start',
         moveSpeed: 'slow',
-        pieceTheme: 'https://chessboardjs.com/img/chesspieces/alpha/{piece}.png'
+        pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
     });
     
     if (playerColor === 'b') board.orientation('black');
@@ -320,22 +320,18 @@ function removeHighlights() {
     $('#myBoard .square-55d63').removeClass('highlight-selected highlight-possible'); 
 }
 
+// Десктопная логика через drag-and-drop
 function handleDrop(source, target) {
     if (game.game_over() || !playerColor || game.turn() !== playerColor || pendingMove) return 'snapback';
-
-    const move = game.move({ from: source, to: target, promotion: 'q' });
-    if (move === null) return 'snapback';
-
-    pendingMove = move;
     
-    // Обновляем доску принудительно ТОЛЬКО для рокировки или превращения пешки.
-    // Обычные ходы библиотека отрисовывает сама без задержек.
-    if (move.flags.includes('k') || move.flags.includes('q') || move.flags.includes('p') || move.promotion) {
-        board.position(game.fen(), false); // false = без анимации, чтобы не дергалось
-    }
-
+    const testMove = game.move({ from: source, to: target, promotion: 'q', verbose: true });
+    if (testMove === null) return 'snapback';
+    
+    game.undo();
+    pendingMove = testMove;
+    setTimeout(() => board.position(game.fen(), true), 100);
     document.getElementById('confirm-move-box').classList.remove('hidden');
-    removeHighlights();
+    return 'snapback';
 }
 
 function setupGameControls(gameRef, roomId) {
@@ -544,6 +540,10 @@ function updateTurnIndicator(isMyTurn) {
         textEl.innerText = '👁️ РЕЖИМ НАБЛЮДАТЕЛЯ';
         return;
     }
+    
+    indicator.className = isMyTurn ? 'turn-indicator my-turn' : 'turn-indicator opponent-turn';
+    textEl.innerText = isMyTurn ? '🎯 ВАШ ХОД' : '⏳ Ход соперника';
+}
     
     indicator.className = isMyTurn ? 'turn-indicator my-turn' : 'turn-indicator opponent-turn';
     textEl.innerText = isMyTurn ? '🎯 ВАШ ХОД' : '⏳ Ход соперника';
