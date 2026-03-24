@@ -165,7 +165,7 @@ async function initGame(roomId) {
         });
     }
 
-    onValue(gameRef, (snap) => {
+        onValue(gameRef, (snap) => {
         const data = snap.val();
         if (!data) return;
 
@@ -174,19 +174,17 @@ async function initGame(roomId) {
             board.position(game.fen());
         }
 
+        // Обновляем takeback окно
         const requestBox = document.getElementById('takeback-request-box');
-        if (data.takebackRequest?.status === 'pending' && data.takebackRequest.from !== uid) {
+        if (data.takebackRequest?.status === 'pending' && data.takebackRequest.from !== (currentUser?.uid || 'anon')) {
             requestBox.classList.remove('hidden');
         } else {
             requestBox.classList.add('hidden');
         }
 
+        // Главное обновление UI (включая индикатор хода)
         updateUI(data);
     });
-
-    setupGameControls(gameRef, roomId);
-}
-
 // ==================== ДЕСКТОП: Перетаскивание ====================
 function handleDrop(source, target) {
     if (game.game_over() || !playerColor || game.turn() !== playerColor || pendingMove) return 'snapback';
