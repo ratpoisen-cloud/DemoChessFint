@@ -9,7 +9,6 @@ import { ref, set, onValue, runTransaction, update, get } from "https://www.gsta
 let board, game = new Chess(), playerColor = null, pendingMove = null, currentUser = null;
 let selectedSquare = null;
 
-// Определяем мобильное устройство
 const isMobile = /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
                  ('ontouchstart' in window && window.innerWidth < 768);
 
@@ -184,51 +183,32 @@ async function initGame(roomId) {
         updateUI(data);
     });
 
-    setupGameControls(gameRef, roomId);   // ← важно: вызываем после подписки
+    setupGameControls(gameRef, roomId);
 }
 
-// ==================== ДЕСКТОП: Перетаскивание ====================
-// ==================== ДЕСКТОП: Перетаскивание с поддержкой рокировки ====================
+// ==================== ДЕСКТОП: Перетаскивание с рокировкой ====================
 function handleDrop(source, target) {
-    if (game.game_over() || !playerColor || game.turn() !== playerColor || pendingMove) {
-        return 'snapback';
-    }
+    if (game.game_over() || !playerColor || game.turn() !== playerColor || pendingMove) return 'snapback';
 
-    // === ОСОБАЯ ЛОГИКА ДЛЯ РОКИРОВКИ ===
     let move = null;
 
-    // Проверяем, пытается ли игрок сделать рокировку (король перетаскивается на ладью)
-    if ((source === 'e1' && target === 'h1') || (source === 'e1' && target === 'a1') || 
-        (source === 'e8' && target === 'h8') || (source === 'e8' && target === 'a8')) {
-
+    if ((source === 'e1' && (target === 'h1' || target === 'a1')) || 
+        (source === 'e8' && (target === 'h8' || target === 'a8'))) {
         const isKingside = target === 'h1' || target === 'h8';
-        const castlingMove = isKingside ? 'O-O' : 'O-O-O';
-
-        // Пробуем выполнить рокировку через chess.js
-        move = game.move(castlingMove);
-    } 
-    // Обычный ход
-    else {
-        move = game.move({ 
-            from: source, 
-            to: target, 
-            promotion: 'q' 
-        });
+        move = game.move(isKingside ? 'O-O' : 'O-O-O');
+    } else {
+        move = game.move({ from: source, to: target, promotion: 'q' });
     }
 
-    if (move === null) {
-        return 'snapback';   // неверный ход
-    }
+    if (move === null) return 'snapback';
 
-    // Успешный ход (обычный или рокировка)
     pendingMove = move;
-    board.position(game.fen());           // обновляем доску
+    board.position(game.fen());
     document.getElementById('confirm-move-box').classList.remove('hidden');
-
-    return move;   // важно вернуть move, чтобы chessboard не делал snapback
+    return move;
 }
 
-// ==================== МОБИЛЬНЫЙ: Выбор + подсветка ====================
+// ==================== МОБИЛЬНЫЙ ====================
 function onSquareClick(square) {
     if (game.game_over() || !playerColor || game.turn() !== playerColor || pendingMove) return;
 
@@ -248,18 +228,12 @@ function onSquareClick(square) {
             selectedSquare = null;
         } else {
             const piece = game.get(square);
-            if (piece && piece.color === playerColor) {
-                selectSquare(square);
-            } else {
-                removeHighlights();
-                selectedSquare = null;
-            }
+            if (piece && piece.color === playerColor) selectSquare(square);
+            else { removeHighlights(); selectedSquare = null; }
         }
     } else {
         const piece = game.get(square);
-        if (piece && piece.color === playerColor) {
-            selectSquare(square);
-        }
+        if (piece && piece.color === playerColor) selectSquare(square);
     }
 }
 
@@ -269,18 +243,15 @@ function selectSquare(square) {
     $(`.square-${square}`).addClass('highlight-selected');
 
     const moves = game.moves({ square: square, verbose: true });
-    moves.forEach(m => {
-        $(`.square-${m.to}`).addClass('highlight-possible');
-    });
+    moves.forEach(m => $(`.square-${m.to}`).addClass('highlight-possible'));
 }
 
 function removeHighlights() {
     $('.square-55d63').removeClass('highlight-selected highlight-possible');
 }
 
-// ==================== Управление игрой ====================
+// ==================== Управление ====================
 function setupGameControls(gameRef, roomId) {
-    // Подтверждение хода
     document.getElementById('confirm-btn').onclick = () => {
         if (!pendingMove) return;
         const updateData = { pgn: game.pgn(), fen: game.fen(), turn: game.turn() };
@@ -293,7 +264,6 @@ function setupGameControls(gameRef, roomId) {
         document.getElementById('confirm-move-box').classList.add('hidden');
     };
 
-    // Отмена хода
     document.getElementById('undo-btn').onclick = () => {
         game.undo();
         board.position(game.fen());
@@ -302,7 +272,6 @@ function setupGameControls(gameRef, roomId) {
         removeHighlights();
     };
 
-    // Запрос takeback
     document.getElementById('takeback-btn').onclick = () => {
         if (game.history().length === 0 || pendingMove) return;
         update(gameRef, { takebackRequest: { from: currentUser?.uid || 'anon', status: 'pending' } });
@@ -316,7 +285,6 @@ function setupGameControls(gameRef, roomId) {
 
     document.getElementById('takeback-reject').onclick = () => update(gameRef, { takebackRequest: null });
 
-    // Сдаться
     document.getElementById('resign-btn').onclick = () => {
         if (confirm("Сдаться?")) {
             const win = playerColor === 'w' ? 'Черные' : 'Белые';
@@ -324,7 +292,6 @@ function setupGameControls(gameRef, roomId) {
         }
     };
 
-    // Навигация
     document.getElementById('exit-btn').onclick = () => location.href = location.origin + location.pathname;
     document.getElementById('modal-exit-btn').onclick = () => location.href = location.origin + location.pathname;
 
@@ -335,49 +302,46 @@ function setupGameControls(gameRef, roomId) {
         location.reload();
     };
 
-    // === НОВОЕ: Поделиться ссылкой ===
     const linkEl = document.getElementById('room-link');
     const shareBtn = document.getElementById('share-btn');
-
     linkEl.value = window.location.href;
 
-    // Клик по полю — копирование (fallback)
     linkEl.onclick = () => {
         linkEl.select();
         document.execCommand('copy');
-        alert('Ссылка скопирована в буфер обмена!');
+        alert('Ссылка скопирована!');
     };
 
-    // Основная кнопка "Поделиться"
     shareBtn.onclick = async () => {
-        const shareData = {
-            title: 'Приглашение в Fentanyl Chess',
-            text: 'Присоединяйся ко мне в шахматы!',
-            url: window.location.href
-        };
-
+        const shareData = { title: 'Fentanyl Chess', text: 'Присоединяйся!', url: window.location.href };
         try {
-            // Современный способ (мобильные + Chrome)
             if (navigator.share && navigator.canShare(shareData)) {
                 await navigator.share(shareData);
             } else {
-                // Fallback для десктопа и старых браузеров
                 linkEl.select();
                 document.execCommand('copy');
-                alert('Ссылка скопирована! Теперь можешь отправить её в мессенджер.');
+                alert('Ссылка скопирована!');
             }
         } catch (err) {
-            // Если пользователь отменил шаринг
-            if (err.name !== 'AbortError') {
-                alert('Не удалось поделиться. Ссылка скопирована в буфер.');
-                linkEl.select();
-                document.execCommand('copy');
-            }
+            if (err.name !== 'AbortError') alert('Ссылка скопирована!');
         }
     };
 }
 
-// ==================== Обновление UI ====================
+function getGameResultMessage() {
+    if (game.in_checkmate()) {
+        const winner = game.turn() === 'w' ? 'Черные' : 'Белые';
+        return `Мат! ${winner} победили`;
+    }
+    if (game.in_draw()) {
+        if (game.in_stalemate()) return "Ничья (пат)";
+        if (game.in_threefold_repetition()) return "Ничья (повторение)";
+        if (game.insufficient_material()) return "Ничья (недостаточно материала)";
+        return "Ничья";
+    }
+    return "Игра окончена";
+}
+
 function updateUI(data) {
     const currentTurn = game.turn();
     const isMyTurn = (playerColor === currentTurn);
@@ -389,7 +353,7 @@ function updateUI(data) {
 
     const moves = document.getElementById('move-list');
     moves.innerHTML = game.history().map((m, i) => 
-        (i % 2 === 0 ? `<span>${Math.floor(i/2) + 1}.</span>` : '') + `<b>${m}</b>`
+        (i % 2 === 0 ? `<span>${Math.floor(i/2)+1}.</span>` : '') + `<b>${m}</b>`
     ).join(' ');
 
     if (data.gameState === 'game_over') {
