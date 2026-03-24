@@ -10,14 +10,12 @@
 
 * {
     box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent;
-    -webkit-touch-callout: none;
 }
 
 body {
     background: var(--bg);
     color: var(--text);
-    font-family: -apple-system, 'Segoe UI', system-ui, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     margin: 0;
     padding: 0;
     min-height: 100vh;
@@ -80,8 +78,6 @@ body {
     cursor: pointer;
     transition: all 0.2s ease;
     font-size: 0.9rem;
-    -webkit-appearance: none;
-    appearance: none;
 }
 
 .btn-primary {
@@ -89,9 +85,9 @@ body {
     color: #000;
 }
 
-.btn-primary:active {
-    opacity: 0.8;
-    transform: scale(0.98);
+.btn-primary:hover {
+    background: #b8c5ae;
+    transform: translateY(-1px);
 }
 
 .btn-outline {
@@ -100,13 +96,18 @@ body {
     border: 2px solid var(--border);
 }
 
-.btn-outline:active {
-    background: rgba(255,255,255,0.1);
+.btn-outline:hover {
+    background: var(--card);
+    border-color: var(--accent);
 }
 
 .btn-danger {
     background: var(--danger);
     color: white;
+}
+
+.btn-danger:hover {
+    background: #9e4545;
 }
 
 .btn-success {
@@ -147,7 +148,6 @@ body {
     margin: 20px 0;
     max-height: 400px;
     overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
 }
 
 .game-item {
@@ -162,14 +162,18 @@ body {
     cursor: pointer;
 }
 
-.game-item:active {
-    transform: scale(0.99);
+.game-item:hover {
     background: #222;
+    transform: translateX(4px);
 }
 
 .game-item.finished {
     border-left-color: var(--text-secondary);
     opacity: 0.8;
+}
+
+.game-item.finished:hover {
+    opacity: 1;
 }
 
 .game-info {
@@ -185,7 +189,7 @@ body {
     font-size: 0.75rem;
 }
 
-/* Игровая область */
+/* Игровая область - АДАПТИВНАЯ ДОСКА */
 .game-layout {
     display: flex;
     gap: 24px;
@@ -194,21 +198,18 @@ body {
 
 .board-area {
     flex: 1;
-    min-width: 0;
+    min-width: 0; /* Важно для flex-сжатия */
     position: relative;
 }
 
+/* Контейнер для доски - делаем её максимально большой */
 #myBoard {
     width: 100%;
-    aspect-ratio: 1 / 1;
+    aspect-ratio: 1 / 1; /* Квадратная доска */
     max-width: 100%;
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-    touch-action: manipulation;
 }
 
+/* Переопределяем стили chessboardjs */
 #myBoard .chessboard {
     width: 100% !important;
     height: auto !important;
@@ -234,8 +235,6 @@ body {
     width: 100% !important;
     height: auto !important;
     max-width: 100%;
-    -webkit-user-drag: none;
-    user-drag: none;
 }
 
 .status-box {
@@ -275,10 +274,6 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
 }
 
 .turn-indicator.my-turn {
@@ -294,8 +289,8 @@ body {
 }
 
 @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.9; }
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
 }
 
 /* Оверлеи */
@@ -311,7 +306,6 @@ body {
     padding: 15px 25px;
     border-radius: 60px;
     backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
@@ -349,12 +343,6 @@ body {
     border: none;
     cursor: pointer;
     color: white;
-    -webkit-appearance: none;
-    appearance: none;
-}
-
-.btn-round:active {
-    transform: scale(0.95);
 }
 
 .btn-round.btn-success {
@@ -366,6 +354,14 @@ body {
     background: var(--danger);
 }
 
+.btn-round:hover {
+    transform: scale(1.08);
+}
+
+.btn-round:active {
+    transform: scale(0.95);
+}
+
 /* Контролы */
 .controls {
     display: flex;
@@ -375,7 +371,7 @@ body {
     justify-content: center;
 }
 
-/* Боковая панель */
+/* Боковая панель - фиксированная ширина */
 .side-panel {
     background: var(--card);
     border-radius: 20px;
@@ -406,7 +402,6 @@ body {
     display: grid;
     grid-template-columns: 35px 1fr 1fr;
     gap: 6px;
-    -webkit-overflow-scrolling: touch;
 }
 
 .move-list-content div {
@@ -440,8 +435,6 @@ body {
     font-size: 0.8rem;
     width: 100%;
     box-sizing: border-box;
-    -webkit-appearance: none;
-    appearance: none;
 }
 
 .share-container .btn {
@@ -458,8 +451,6 @@ body {
     align-items: center;
     justify-content: center;
     z-index: 1000;
-    -webkit-transform: translateZ(1000px);
-    transform: translateZ(1000px);
 }
 
 .modal-content {
@@ -484,30 +475,12 @@ body {
     border-radius: 12px;
     box-sizing: border-box;
     font-size: 1rem;
-    -webkit-appearance: none;
-    appearance: none;
-}
-
-/* Loader */
-.loader {
-    border: 3px solid var(--border);
-    border-top: 3px solid var(--accent);
-    border-radius: 50%;
-    width: 30px;
-    height: 30px;
-    animation: spin 1s linear infinite;
-    margin: 10px auto;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
 }
 
 /* Подсветка фигур */
 .highlight-selected { 
     background-color: rgba(255, 215, 0, 0.6) !important;
-    box-shadow: inset 0 0 0 3px rgba(255, 215, 0, 0.9) !important;
+    box-shadow: inset 0 0 0 3px rgba(255, 215, 0, 0.9), 0 0 15px rgba(255, 215, 0, 0.5) !important;
     position: relative;
     z-index: 10;
 }
@@ -523,7 +496,7 @@ body {
     transition: all 0.1s ease;
 }
 
-/* Адаптация для разных экранов */
+/* АДАПТАЦИЯ ДЛЯ РАЗНЫХ ЭКРАНОВ */
 @media (min-width: 1200px) {
     .board-area {
         max-width: 650px;
@@ -567,6 +540,20 @@ body {
     .move-list-content {
         height: 250px;
     }
+    
+    .controls {
+        justify-content: center;
+    }
+    
+    .btn-round {
+        width: 48px;
+        height: 48px;
+        font-size: 1.3rem;
+    }
+    
+    .confirm-overlay {
+        padding: 12px 20px;
+    }
 }
 
 @media (max-width: 600px) {
@@ -596,6 +583,11 @@ body {
         padding: 10px 16px;
     }
     
+    .btn {
+        padding: 8px 16px;
+        font-size: 0.85rem;
+    }
+    
     .controls {
         gap: 8px;
     }
@@ -622,35 +614,17 @@ body {
     .share-container .btn {
         width: 100%;
     }
-    
-    .btn-round {
-        width: 48px;
-        height: 48px;
-        font-size: 1.3rem;
-    }
-    
-    .confirm-overlay {
-        padding: 12px 20px;
-    }
 }
 
-/* Специальные стили для iOS */
-@supports (-webkit-touch-callout: none) {
-    .btn, .btn-round {
-        cursor: pointer;
+/* Для мобильных устройств - более контрастная подсветка */
+@media (max-width: 768px) {
+    .highlight-selected { 
+        background-color: rgba(255, 215, 0, 0.75) !important;
+        box-shadow: inset 0 0 0 4px rgba(255, 215, 0, 0.9) !important;
     }
     
-    .btn:active {
-        opacity: 0.7;
-    }
-    
-    .turn-indicator.my-turn {
-        animation: none;
-        opacity: 1;
-    }
-    
-    .modal {
-        -webkit-backdrop-filter: blur(10px);
-        backdrop-filter: blur(10px);
+    .highlight-possible { 
+        background-color: rgba(76, 175, 80, 0.65) !important;
+        box-shadow: inset 0 0 0 3px rgba(76, 175, 80, 0.8) !important;
     }
 }
