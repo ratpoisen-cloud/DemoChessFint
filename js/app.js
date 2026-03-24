@@ -28,7 +28,6 @@ function setupAuth() {
             userInfo?.classList.remove('hidden');
             document.getElementById('user-name').innerText = user.displayName || user.email.split('@')[0];
             document.getElementById('user-photo').src = user.photoURL || 'https://via.placeholder.com/35';
-            // Если мы не в комнате, обновляем лобби
             if (!new URLSearchParams(window.location.search).get('room')) loadLobby(user);
         } else {
             authGroup?.classList.remove('hidden');
@@ -36,9 +35,10 @@ function setupAuth() {
         }
     });
 
+    // Google
     document.getElementById('login-google').onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
-    document.getElementById('login-apple').onclick = () => signInWithPopup(auth, new OAuthProvider('apple.com'));
     
+    // Email
     const emailModal = document.getElementById('email-modal');
     document.getElementById('login-email-trigger').onclick = () => emailModal.classList.remove('hidden');
     document.getElementById('close-email-modal').onclick = () => emailModal.classList.add('hidden');
@@ -50,16 +50,17 @@ function setupAuth() {
             await signInWithEmailAndPassword(auth, email, pass);
             emailModal.classList.add('hidden');
         } catch (err) {
-            if (err.code === 'auth/user-not-found') {
-                await createUserWithEmailAndPassword(auth, email, pass);
-                emailModal.classList.add('hidden');
+            if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+                try {
+                    await createUserWithEmailAndPassword(auth, email, pass);
+                    emailModal.classList.add('hidden');
+                } catch (e) { alert("Ошибка: " + e.message); }
             } else { alert(err.message); }
         }
     };
 
     document.getElementById('logout-btn').onclick = () => signOut(auth).then(() => location.href = location.origin + location.pathname);
 }
-
 // --- ЛОББИ (ОБНОВЛЕННОЕ) ---
 function initLobby() {
     document.getElementById('lobby-section').classList.remove('hidden');
