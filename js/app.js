@@ -188,14 +188,44 @@ async function initGame(roomId) {
 }
 
 // ==================== ДЕСКТОП: Перетаскивание ====================
+// ==================== ДЕСКТОП: Перетаскивание с поддержкой рокировки ====================
 function handleDrop(source, target) {
-    if (game.game_over() || !playerColor || game.turn() !== playerColor || pendingMove) return 'snapback';
+    if (game.game_over() || !playerColor || game.turn() !== playerColor || pendingMove) {
+        return 'snapback';
+    }
 
-    const move = game.move({ from: source, to: target, promotion: 'q' });
-    if (move === null) return 'snapback';
+    // === ОСОБАЯ ЛОГИКА ДЛЯ РОКИРОВКИ ===
+    let move = null;
 
+    // Проверяем, пытается ли игрок сделать рокировку (король перетаскивается на ладью)
+    if ((source === 'e1' && target === 'h1') || (source === 'e1' && target === 'a1') || 
+        (source === 'e8' && target === 'h8') || (source === 'e8' && target === 'a8')) {
+
+        const isKingside = target === 'h1' || target === 'h8';
+        const castlingMove = isKingside ? 'O-O' : 'O-O-O';
+
+        // Пробуем выполнить рокировку через chess.js
+        move = game.move(castlingMove);
+    } 
+    // Обычный ход
+    else {
+        move = game.move({ 
+            from: source, 
+            to: target, 
+            promotion: 'q' 
+        });
+    }
+
+    if (move === null) {
+        return 'snapback';   // неверный ход
+    }
+
+    // Успешный ход (обычный или рокировка)
     pendingMove = move;
+    board.position(game.fen());           // обновляем доску
     document.getElementById('confirm-move-box').classList.remove('hidden');
+
+    return move;   // важно вернуть move, чтобы chessboard не делал snapback
 }
 
 // ==================== МОБИЛЬНЫЙ: Выбор + подсветка ====================
