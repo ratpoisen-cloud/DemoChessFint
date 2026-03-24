@@ -17,56 +17,51 @@
             </div>
             <div id="auth-buttons" class="auth-group">
                 <button id="login-google" class="btn btn-google">Google</button>
+                <button id="login-apple" class="btn btn-dark">Apple</button>
                 <button id="login-email-trigger" class="btn btn-outline">Email</button>
             </div>
         </div>
 
         <div id="lobby-section" class="card hidden">
             <h1>Мои партии</h1>
-            <div id="games-list" class="games-grid">Загрузка...</div>
-            <button id="create-game-btn" class="btn btn-success btn-large">Новая игра</button>
+            <div id="games-list" class="games-grid">Загрузка ваших игр...</div>
+            <button id="create-game-btn" class="btn btn-success btn-large">Создать новую игру</button>
         </div>
 
         <div id="game-section" class="hidden">
             <div class="game-layout">
                 <div class="board-area">
                     <div class="status-box">
-                        <div id="status">Загрузка...</div>
+                        <div id="status">Ожидание...</div>
                         <div id="user-color" class="badge"></div>
                     </div>
                     
-                    <div id="myBoard"></div>
+                    <div id="myBoard" style="width: 100%"></div>
+                    <div id="takeback-request-box" class="confirm-overlay hidden">
+    <div class="request-text">Соперник просит отменить ход?</div>
+    <div class="request-buttons">
+        <button id="takeback-accept" class="btn-round btn-success">✓</button>
+        <button id="takeback-reject" class="btn-round btn-danger">✕</button>
+    </div>
+</div>
 
-                    <div class="action-bar">
-                        <div id="confirm-move-box" class="action-panel hidden">
-                            <span class="action-label">Ваш ход?</span>
-                            <div class="action-btns">
-                                <button id="confirm-btn" class="btn-action btn-confirm">✔</button>
-                                <button id="undo-btn" class="btn-action btn-cancel">✖</button>
-                            </div>
-                        </div>
-
-                        <div id="takeback-request-box" class="action-panel request-theme hidden">
-                            <span class="action-label">Отменить ход?</span>
-                            <div class="action-btns">
-                                <button id="takeback-accept" class="btn-action btn-confirm">✔</button>
-                                <button id="takeback-reject" class="btn-action btn-cancel">✖</button>
-                            </div>
-                        </div>
+                    <div id="confirm-move-box" class="confirm-overlay hidden">
+                        <button id="confirm-btn" class="btn-round btn-success">✓</button>
+                        <button id="undo-btn" class="btn-round btn-danger">✕</button>
                     </div>
 
                     <div class="controls">
-                        <button id="takeback-btn" class="btn btn-outline">Вернуть ход</button>
                         <button id="resign-btn" class="btn btn-danger">Сдаться</button>
+                        <button id="takeback-btn" class="btn btn-outline">Просить отмену</button>
                         <button id="exit-btn" class="btn">В лобби</button>
                     </div>
                 </div>
 
                 <div class="side-panel">
-                    <h3>История</h3>
+                    <h3>История ходов</h3>
                     <div id="move-list" class="move-list-content"></div>
                     <div class="share-box">
-                        <small>Ссылка:</small>
+                        <small>Пригласить друга:</small>
                         <input type="text" id="room-link" readonly>
                     </div>
                 </div>
@@ -74,21 +69,26 @@
         </div>
 
         <div id="email-modal" class="modal hidden">
-            <div class="modal-content">
-                <h3>Вход</h3>
-                <input type="email" id="email-input" placeholder="Email" class="input-field">
+            <div class="modal-content auth-modal">
+                <h3>Вход / Регистрация</h3>
+                <input type="email" id="email-input" placeholder="Ваша почта" class="input-field">
                 <input type="password" id="password-input" placeholder="Пароль" class="input-field">
-                <button id="email-auth-btn" class="btn btn-success">Войти</button>
-                <button id="close-email-modal" class="btn btn-sm">Отмена</button>
+                <div class="modal-buttons">
+                    <button id="email-auth-btn" class="btn btn-success">Войти</button>
+                    <button id="close-email-modal" class="btn">Отмена</button>
+                </div>
+                <p id="email-error" class="error-text hidden"></p>
             </div>
         </div>
 
         <div id="game-modal" class="modal hidden">
             <div class="modal-content">
-                <h2 id="modal-title">Финал</h2>
+                <h2 id="modal-title">Игра окончена</h2>
                 <p id="modal-desc"></p>
-                <button id="modal-rematch-btn" class="btn btn-success">Реванш</button>
-                <button id="modal-exit-btn" class="btn">В лобби</button>
+                <div class="modal-buttons">
+                    <button id="modal-rematch-btn" class="btn btn-success">Реванш</button>
+                    <button id="modal-exit-btn" class="btn">В лобби</button>
+                </div>
             </div>
         </div>
     </div>
