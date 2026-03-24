@@ -336,3 +336,24 @@ body {
     flex-direction: column;
     gap: 8px;
 }
+.share-container {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.share-container input {
+    flex: 1;
+    background: #252525;
+    border: 1px solid var(--border);
+    color: #aaa;
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+}
+
+#share-btn {
+    white-space: nowrap;
+    padding: 10px 16px;
+    font-size: 0.95rem;
+}
