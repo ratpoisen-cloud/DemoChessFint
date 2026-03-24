@@ -1,23 +1,24 @@
 :root {
-    --bg: #0a0a0a;
-    --card: #121212;
-    --accent: #00e676;
-    --danger: #ff5252;
-    --text: #eeeeee;
-    --text-secondary: #aaaaaa;
-    --border: #252525;
+    --bg: #1a1c1a; /* Глубокий темно-зеленый, почти черный */
+    --card: #242724;
+    --accent: #a8b59e; /* Цвет бледного мха */
+    --danger: #7e3535; /* Приглушенная кровь */
+    --text: #d1d1c1;   /* Цвет старого льна */
+    --text-secondary: #8e928e;
+    --border: #323832;
+    --board-light: #d1d1c1; /* Светлые клетки (Кость) */
+    --board-dark: #2d342d;  /* Темные клетки (Хвоя) */
 }
 
 body {
     background: var(--bg);
     color: var(--text);
-    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-family: 'Georgia', serif; /* Более "книжный" шрифт */
     margin: 0;
     padding: 0;
     min-height: 100vh;
 }
 
-/* ГЛОБАЛЬНОЕ СКРЫТИЕ (Исправляет наложение окон на лобби) */
 .hidden { display: none !important; }
 
 .main-container {
@@ -27,131 +28,62 @@ body {
 }
 
 /* Топ-бар */
-.top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
-#user-info { display: flex; align-items: center; gap: 12px; }
-#user-photo { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--accent); }
+.top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+#user-photo { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--accent); opacity: 0.8; }
+
+/* Доска (Цвета клеток) */
+.white-1e1d7 { background-color: var(--board-light) !important; }
+.black-3c85d { background-color: var(--board-dark) !important; }
+
+/* Подсветки в стиле Dark Folk (Призрачные) */
+.highlight-selected { 
+    background-color: rgba(255, 255, 255, 0.07) !important; 
+    box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.1); 
+}
+.highlight-possible { 
+    background-color: rgba(168, 181, 158, 0.15) !important; 
+    border: 1px inset rgba(168, 181, 158, 0.2);
+}
 
 /* Кнопки */
-.btn { padding: 10px 20px; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.25s ease; }
-.btn-primary { background: var(--accent); color: #000; }
-.btn-outline { background: transparent; color: var(--text); border: 2px solid var(--border); }
-.btn-danger { background: var(--danger); color: white; }
-.btn-success { background: var(--accent); color: #000; }
-.btn-large { padding: 14px 32px; font-size: 1.1rem; width: 100%; }
-
-/* Карточки */
-.card { background: var(--card); padding: 28px; border-radius: 20px; border: 1px solid var(--border); }
-.section-title { font-size: 1.9rem; text-align: center; margin-bottom: 20px; }
-
-/* Лобби */
-.games-grid { display: grid; gap: 12px; margin: 20px 0; }
-.game-item { background: #1a1a1a; padding: 16px 20px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid var(--accent); transition: 0.3s; }
-.game-item:hover { background: #222; transform: translateX(6px); }
-
-/* Игровая область */
-.board-area { position: relative; max-width: 520px; margin: 0 auto; }
-.status-box { background: var(--card); padding: 16px 20px; border-radius: 16px; margin-bottom: 16px; text-align: center; border: 1px solid var(--border); }
-.status-text { color: var(--text-secondary); margin-bottom: 8px; }
-.turn-indicator { margin: 12px 0; padding: 14px 24px; border-radius: 14px; font-size: 1.25rem; font-weight: 700; transition: all 0.4s ease; min-height: 58px; display: flex; align-items: center; justify-content: center; }
-.turn-indicator.my-turn { background: linear-gradient(135deg, #00e676, #4caf50); color: #000; box-shadow: 0 0 25px rgba(0, 230, 118, 0.6); animation: pulse 2s infinite; }
-.turn-indicator.opponent-turn { background: #1f1f1f; color: var(--text-secondary); }
-
-@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
-.chessboard { border-radius: 16px; overflow: hidden; box-shadow: 0 15px 50px rgba(0,0,0,0.7); border: 2px solid var(--border); }
-
-/* Оверлеи и подтверждения */
-.confirm-overlay {
-    position: absolute;
-    top: 65%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 150;
-    display: flex;
-    gap: 16px;
-    background: rgba(0,0,0,0.7);
-    padding: 15px 25px;
-    border-radius: 50px;
-    backdrop-filter: blur(8px);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+.btn { 
+    padding: 10px 20px; 
+    border-radius: 4px; /* Более строгие углы */
+    font-weight: 500; 
+    cursor: pointer; 
+    transition: all 0.3s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 13px;
 }
+.btn-primary { background: var(--accent); color: var(--bg); }
+.btn-primary:hover { filter: brightness(1.2); }
+.btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+.btn-outline:hover { border-color: var(--accent); color: var(--accent); }
 
-/* Карточка запроса на отмену */
-.request-card {
-    background: var(--card);
-    padding: 24px;
-    border-radius: 20px;
-    border: 2px solid var(--accent);
-    text-align: center;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.8);
-    max-width: 300px;
-}
-
-.request-card p {
-    margin: 0 0 20px 0;
-    font-size: 1.05rem;
-    color: white;
-}
-
-.request-buttons {
-    display: flex;
-    gap: 15px;
-    justify-content: center;
-}
-
-.btn-round {
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    font-size: 1.6rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    border: 2px solid rgba(255,255,255,0.1);
-    cursor: pointer;
-    color: white;
-}
-
-.btn-round.btn-success { background: var(--accent); color: #000; border-color: transparent; }
-.btn-round.btn-danger { background: var(--danger); border-color: transparent; }
-.btn-round:hover { transform: scale(1.1); }
-.btn-round:active { transform: scale(0.9); }
-
-/* Контролы */
-.controls { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; justify-content: center; }
-
-/* Боковая панель */
-.game-layout { display: flex; gap: 20px; }
-.side-panel { background: var(--card); border-radius: 20px; padding: 24px; width: 100%; max-width: 340px; border: 1px solid var(--border); box-sizing: border-box; }
-.move-list-content { background: #0a0a0a; padding: 16px; border-radius: 12px; height: 260px; overflow-y: auto; font-family: monospace; line-height: 1.75; margin-bottom: 20px; }
-.share-box small { display: block; margin-bottom: 8px; color: var(--text-secondary); }
-.share-container { display: flex; gap: 10px; }
-.share-container input { flex: 1; background: #1a1a1a; border: 1px solid var(--border); color: var(--text); padding: 12px; border-radius: 10px; width: 100%; box-sizing: border-box;}
+/* Карточки и Инфо */
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 20px; }
+.status-bar { background: #202320; border: 1px solid var(--border); padding: 15px; border-radius: 8px; margin-top: 20px; }
 
 /* Модальные окна */
-.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-.modal-content { background: var(--card); padding: 32px; border-radius: 24px; max-width: 380px; width: 90%; text-align: center; border: 1px solid var(--accent); box-shadow: 0 0 40px rgba(0,0,0,0.8); box-sizing: border-box; }
-.input-field { width: 100%; padding: 14px; margin: 10px 0; background: #1a1a1a; border: 1px solid var(--border); color: white; border-radius: 12px; box-sizing: border-box;}
-
-/* Подсветки */
-.highlight-selected { background-color: rgba(255, 255, 0, 0.55) !important; box-shadow: inset 0 0 15px 4px rgba(255, 255, 0, 0.9); }
-.highlight-possible { background-color: rgba(0, 230, 118, 0.45) !important; box-shadow: inset 0 0 10px 3px rgba(0, 230, 118, 0.8); }
-
-/* Адаптация */
-@media (max-width: 768px) { .game-layout { flex-direction: column; } .side-panel { max-width: 100%; } }
-/* Мягкая подсветка выбранной фигуры */
-.highlight-selected { 
-    background-color: rgba(204, 204, 0, 0.6) !important; 
+.modal { position: fixed; inset: 0; background: rgba(10, 12, 10, 0.95); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+.modal-content { 
+    background: var(--card); 
+    padding: 40px; 
+    border-radius: 4px; 
+    max-width: 380px; 
+    width: 90%; 
+    text-align: center; 
+    border: 1px solid var(--border); 
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
 }
 
-/* Едва заметная подсветка выбранной фигуры */
-.highlight-selected { 
-    background-color: rgba(255, 255, 255, 0.1) !important; 
-    box-shadow: inset 0 0 5px rgba(255, 255, 255, 0.2);
-}
-
-/* Приглушенная подсветка доступных полей */
-.highlight-possible { 
-    background-color: rgba(0, 230, 118, 0.08) !important; 
-    cursor: pointer;
+.input-field { 
+    width: 100%; 
+    padding: 12px; 
+    margin: 10px 0; 
+    background: #161816; 
+    border: 1px solid var(--border); 
+    color: var(--text); 
+    box-sizing: border-box; 
 }
