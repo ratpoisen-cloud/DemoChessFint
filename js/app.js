@@ -633,22 +633,22 @@ function updateTurnIndicator(isMyTurn) {
     
     if (game.game_over()) {
         turnStatus.className = 'turn-status opponent-turn';
-        turnText.innerText = '🏁 ИГРА ОКОНЧЕНА';
+        turnText.innerText = 'ИГРА ОКОНЧЕНА';
         return;
     }
     
     if (!playerColor) {
         turnStatus.className = 'turn-status opponent-turn';
-        turnText.innerHTML = '👁️ РЕЖИМ НАБЛЮДАТЕЛЯ';
+        turnText.innerHTML = 'РЕЖИМ НАБЛЮДАТЕЛЯ';
         return;
     }
     
     if (isMyTurn) {
         turnStatus.className = 'turn-status my-turn';
-        turnText.innerHTML = '🎯 ВАШ ХОД';
+        turnText.innerHTML = 'ВАШ ХОД';
     } else {
         turnStatus.className = 'turn-status opponent-turn';
-        turnText.innerHTML = '⏳ Ход соперника';
+        turnText.innerHTML = 'Ход соперника';
     }
 }
 
