@@ -205,36 +205,14 @@ body {
 /* Контейнер для доски - делаем её максимально большой */
 #myBoard {
     width: 100%;
-    aspect-ratio: 1 / 1; /* Квадратная доска */
-    max-width: 100%;
+    max-width: 650px; /* или твой размер */
 }
 
 /* Переопределяем стили chessboardjs */
-#myBoard .chessboard {
-    width: 100% !important;
-    height: auto !important;
-}
-
-#myBoard .chessboard-63f37 {
-    width: 100% !important;
-    height: auto !important;
-}
-
-#myBoard table {
-    width: 100% !important;
-    height: auto !important;
-}
-
-#myBoard td {
-    width: 12.5% !important;
-    height: auto !important;
-    aspect-ratio: 1 / 1;
-}
 
 #myBoard img {
-    width: 100% !important;
-    height: auto !important;
-    max-width: 100%;
+    width: 100%;
+    height: auto;
 }
 
 .status-box {
