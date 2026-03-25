@@ -610,3 +610,86 @@ body {
         box-shadow: inset 0 0 0 3px rgba(76, 175, 80, 0.8) !important;
     }
 }
+/* ===== НОВЫЕ СТИЛИ ДЛЯ ИНДИКАТОРА НАД ДОСКОЙ ===== */
+
+/* Контейнер доски */
+.board-area {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Контейнер для индикатора над доской */
+.turn-overlay {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 12px;
+}
+
+/* Индикатор хода */
+.turn-indicator {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #00e676, #4caf50);
+    color: #000;
+    padding: 10px 28px;
+    border-radius: 50px;
+    font-weight: 800;
+    font-size: 1rem;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    transition: all 0.2s ease;
+}
+
+/* Стиль для хода соперника */
+.turn-indicator.opponent-turn {
+    background: #2a2a2a;
+    color: #8a8a8a;
+    box-shadow: none;
+    border: 1px solid #3a3a3a;
+}
+
+/* Анимация пульсации для своего хода */
+.turn-indicator:not(.opponent-turn) {
+    animation: subtlePulse 1.5s infinite;
+}
+
+@keyframes subtlePulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+    }
+    50% {
+        transform: scale(1.02);
+        box-shadow: 0 6px 20px rgba(76, 175, 80, 0.5);
+    }
+}
+
+/* Для мобильных устройств */
+@media (max-width: 768px) {
+    .turn-indicator {
+        padding: 6px 20px;
+        font-size: 0.85rem;
+    }
+    
+    .turn-overlay {
+        margin-bottom: 8px;
+    }
+}
+
+/* Для очень маленьких экранов */
+@media (max-width: 480px) {
+    .turn-indicator {
+        padding: 4px 14px;
+        font-size: 0.75rem;
+    }
+}
+
+/* Скрываем старый индикатор, если он остался в статус-баре (на всякий случай) */
+.status-box .turn-indicator {
+    display: none;
+}
