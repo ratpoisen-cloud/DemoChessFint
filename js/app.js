@@ -30,20 +30,47 @@ window.addEventListener('DOMContentLoaded', () => {
 // --- АВТОРИЗАЦИЯ ---
 function setupAuth() {
     onAuthStateChanged(auth, (user) => {
-        currentUser = user;
-        const authGroup = document.getElementById('auth-buttons');
-        const userInfo = document.getElementById('user-info');
-        if (user) {
-            authGroup?.classList.add('hidden');
-            userInfo?.classList.remove('hidden');
-            document.getElementById('user-name').innerText = user.displayName || user.email.split('@')[0];
-            document.getElementById('user-photo').src = user.photoURL || 'https://via.placeholder.com/35';
-            if (!new URLSearchParams(window.location.search).get('room')) loadLobby(user);
+    currentUser = user;
+    const authGroup = document.getElementById('auth-buttons');
+    const userInfo = document.getElementById('user-info');
+    if (user) {
+        authGroup?.classList.add('hidden');
+        userInfo?.classList.remove('hidden');
+        
+        // Получаем имя пользователя
+        const userName = user.displayName || user.email.split('@')[0];
+        document.getElementById('user-name').innerText = userName;
+        
+        // Обработка аватара
+        const userPhoto = document.getElementById('user-photo');
+        if (user.photoURL) {
+            // Если есть фото от Google — используем его
+            userPhoto.src = user.photoURL;
+            userPhoto.style.display = 'block';
+            // Скрываем буквенный аватар
+            const letterAvatar = document.querySelector('.letter-avatar');
+            if (letterAvatar) letterAvatar.style.display = 'none';
         } else {
-            authGroup?.classList.remove('hidden');
-            userInfo?.classList.add('hidden');
+            // Если фото нет — показываем буквенный аватар
+            userPhoto.style.display = 'none';
+            
+            // Создаем или обновляем буквенный аватар
+            let letterAvatar = document.querySelector('.letter-avatar');
+            if (!letterAvatar) {
+                letterAvatar = document.createElement('div');
+                letterAvatar.className = 'letter-avatar';
+                userPhoto.parentNode.insertBefore(letterAvatar, userPhoto.nextSibling);
+            }
+            letterAvatar.style.display = 'flex';
+            letterAvatar.innerText = userName.charAt(0).toUpperCase();
         }
-    });
+        
+        if (!new URLSearchParams(window.location.search).get('room')) loadLobby(user);
+    } else {
+        authGroup?.classList.remove('hidden');
+        userInfo?.classList.add('hidden');
+    }
+});
 
     document.getElementById('login-google').onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
 
