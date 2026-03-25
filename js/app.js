@@ -556,22 +556,44 @@ function updateUI(data) {
     
     updateTurnIndicator(isMyTurn);
     
-    const history = game.history();
+    // Обновляем текстовый статус игры в новом блоке
+    if (game.game_over()) {
+        updateGameStatusText(data.message || getGameResultMessage());
+    } else if (game.in_check()) {
+        updateGameStatusText(`⚠️ ШАХ! ${game.turn() === 'w' ? 'Белым' : 'Черным'}`);
+    } else {
+        updateGameStatusText('♟️ Игра активна');
+    }
+    
+    const history = game.history({ verbose: true });
     const moveListDiv = document.getElementById('move-list');
     if (moveListDiv) {
         moveListDiv.innerHTML = '';
         if (history.length === 0) {
             moveListDiv.innerHTML = '<div style="grid-column: span 3; text-align: center; color: var(--text-secondary);">Нет ходов</div>';
         } else {
-            for (let i = 0; i < history.length; i += 2) {
+            for (let i = 0; i < history.length; i++) {
                 const moveNum = Math.floor(i / 2) + 1;
-                const whiteMove = history[i] || '';
-                const blackMove = history[i + 1] || '';
-                moveListDiv.innerHTML += `
-                    <div style="color: var(--text-secondary);">${moveNum}.</div>
-                    <div>${whiteMove}</div>
-                    <div>${blackMove}</div>
-                `;
+                const isWhiteMove = i % 2 === 0;
+                
+                if (isWhiteMove) {
+                    moveListDiv.innerHTML += `
+                        <div style="color: var(--text-secondary);">${moveNum}.</div>
+                        <div>${history[i].san || history[i]}</div>
+                        <div></div>
+                    `;
+                } else {
+                    const lastRow = moveListDiv.lastElementChild;
+                    if (lastRow && lastRow.children.length === 3) {
+                        lastRow.children[2].innerHTML = history[i].san || history[i];
+                    } else {
+                        moveListDiv.innerHTML += `
+                            <div style="color: var(--text-secondary);">${moveNum}</div>
+                            <div></div>
+                            <div>${history[i].san || history[i]}</div>
+                        `;
+                    }
+                }
             }
         }
         moveListDiv.scrollTop = moveListDiv.scrollHeight;
@@ -581,26 +603,44 @@ function updateUI(data) {
         document.getElementById('game-modal').classList.remove('hidden');
         document.getElementById('modal-title').innerHTML = '🏆 Игра окончена';
         document.getElementById('modal-desc').innerHTML = data.message || getGameResultMessage();
+        
+        document.getElementById('confirm-move-box').classList.add('hidden');
+        pendingMove = null;
+        clearSelection();
     }
 }
 
 function updateTurnIndicator(isMyTurn) {
-    const indicator = document.getElementById('turn-indicator');
-    const textEl = document.getElementById('turn-text');
-    if (!indicator || !textEl) return;
+    const turnStatus = document.getElementById('turn-status');
+    const turnText = document.getElementById('turn-text');
+    
+    if (!turnStatus || !turnText) return;
     
     if (game.game_over()) {
-        indicator.className = 'turn-indicator';
-        textEl.innerText = '🏁 ИГРА ОКОНЧЕНА';
+        turnStatus.className = 'turn-status opponent-turn';
+        turnText.innerText = '🏁 ИГРА ОКОНЧЕНА';
         return;
     }
     
     if (!playerColor) {
-        indicator.className = 'turn-indicator opponent-turn';
-        textEl.innerText = '👁️ РЕЖИМ НАБЛЮДАТЕЛЯ';
+        turnStatus.className = 'turn-status opponent-turn';
+        turnText.innerHTML = '👁️ РЕЖИМ НАБЛЮДАТЕЛЯ';
         return;
     }
     
-    indicator.className = isMyTurn ? 'turn-indicator my-turn' : 'turn-indicator opponent-turn';
-    textEl.innerText = isMyTurn ? '🎯 ВАШ ХОД' : '⏳ Ход соперника';
+    if (isMyTurn) {
+        turnStatus.className = 'turn-status my-turn';
+        turnText.innerHTML = '🎯 ВАШ ХОД';
+    } else {
+        turnStatus.className = 'turn-status opponent-turn';
+        turnText.innerHTML = '⏳ Ход соперника';
+    }
+}
+
+// Добавьте эту новую функцию после updateTurnIndicator
+function updateGameStatusText(message) {
+    const statusText = document.getElementById('game-status-text');
+    if (statusText) {
+        statusText.innerHTML = message;
+    }
 }
