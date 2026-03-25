@@ -184,11 +184,26 @@ async function initGame(roomId) {
     playerColor = p.white === uid ? 'w' : (p.black === uid ? 'b' : null);
     
     if (!playerColor) {
-        document.getElementById('status').innerText = "Вы наблюдатель";
-        document.getElementById('user-color').innerText = "Наблюдатель";
-    } else {
-        document.getElementById('user-color').innerText = playerColor === 'w' ? 'Белые' : 'Черные';
+    document.getElementById('status').innerText = "Вы наблюдатель";
+    document.getElementById('user-color').innerText = "Наблюдатель";
+    const playerBadge = document.querySelector('.player-badge');
+    if (playerBadge) {
+        playerBadge.className = 'player-badge';
     }
+} else {
+    const playerColorText = playerColor === 'w' ? 'Белые' : 'Черные';
+    document.getElementById('user-color').innerText = playerColorText;
+    
+    // Добавляем класс для стилизации бейджа
+    const playerBadge = document.querySelector('.player-badge');
+    if (playerBadge) {
+        if (playerColor === 'w') {
+            playerBadge.className = 'player-badge white-piece';
+        } else {
+            playerBadge.className = 'player-badge black-piece';
+        }
+    }
+}
     
     // Инициализация доски
     board = Chessboard('myBoard', {
