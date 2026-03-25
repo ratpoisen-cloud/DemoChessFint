@@ -31,6 +31,10 @@ body {
     padding: 16px;
 }
 
+/* Переопределение цветов клеток через CSS */
+.white-1e1d7 { background-color: #e8f5e8 !important; }
+.black-3c85d { background-color: #2c5a2c !important; }
+
 /* Топ-бар */
 .top-bar {
     display: flex;
