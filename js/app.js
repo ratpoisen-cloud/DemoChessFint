@@ -327,46 +327,70 @@ function removeHighlights() {
 
 // Десктопная логика через drag-and-drop
 function handleDrop(source, target) {
-    if (game.game_over() || !playerColor || game.turn() !== playerColor || pendingMove) return 'snapback';
+    if (game.game_over() || !playerColor || game.turn() !== playerColor || pendingMove) {
+        return 'snapback';
+    }
     
-    const testMove = game.move({ from: source, to: target, promotion: 'q', verbose: true });
+    const testMove = game.move({ from: source, to: target, promotion: 'q' });
     if (testMove === null) return 'snapback';
     
     game.undo();
-    pendingMove = testMove;
-    setTimeout(() => board.position(game.fen(), true), 100);
-    document.getElementById('confirm-move-box').classList.remove('hidden');
+    
+    // ✅ сохраняем ТОЛЬКО координаты
+    pendingMove = {
+        from: source,
+        to: target
+    };
+
+    // ❌ УДАЛЕНО: board.position (это критично)
+
+    document.getElementById('confirm-move-box')?.classList.remove('hidden');
+    
     return 'snapback';
 }
 
 function setupGameControls(gameRef, roomId) {
     // Подтверждение хода
-    document.getElementById('confirm-btn').onclick = () => {
-        if (!pendingMove) return;
-        
-        game.move(pendingMove);
-        const updateData = { pgn: game.pgn(), fen: game.fen(), turn: game.turn(), lastMove: Date.now() };
-        
-        if (game.game_over()) { 
-            updateData.gameState = 'game_over'; 
-            updateData.message = getGameResultMessage(); 
-        }
-        
-        update(gameRef, updateData);
-        pendingMove = null;
-        document.getElementById('confirm-move-box').classList.add('hidden');
-        clearSelection();
+   document.getElementById('confirm-btn').onclick = () => {
+    if (!pendingMove) return;
+    
+    game.move({
+        from: pendingMove.from,
+        to: pendingMove.to,
+        promotion: 'q'
+    });
+
+    const updateData = { 
+        pgn: game.pgn(), 
+        fen: game.fen(), 
+        turn: game.turn(), 
+        lastMove: Date.now() 
     };
+    
+    if (game.game_over()) { 
+        updateData.gameState = 'game_over'; 
+        updateData.message = getGameResultMessage(); 
+    }
+    
+    update(gameRef, updateData);
+    
+    pendingMove = null;
+    document.getElementById('confirm-move-box')?.classList.add('hidden');
+    clearSelection();
+};
     
     // Отмена неподтвержденного хода
     document.getElementById('cancel-move-btn').onclick = () => {
-        if (pendingMove) {
-            pendingMove = null;
-            document.getElementById('confirm-move-box').classList.add('hidden');
-            board.position(game.fen(), true);
-            clearSelection();
-        }
-    };
+    if (pendingMove) {
+        pendingMove = null;
+
+        // ✅ ВАЖНО: возвращаем доску в реальное состояние
+        board.position(game.fen(), false);
+
+        document.getElementById('confirm-move-box')?.classList.add('hidden');
+        clearSelection();
+    }
+};
     
     // Сдача
     document.getElementById('resign-btn').onclick = () => {
