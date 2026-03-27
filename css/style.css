@@ -606,3 +606,55 @@ body {
     background: linear-gradient(135deg, #6b8c5c, #4a6a3a);
     color: white;
 }
+/* Добавьте в конец файла style.css */
+
+/* Подсветка источника при перетаскивании (зеленый контур) */
+.highlight-drag-source {
+    position: relative;
+    box-shadow: inset 0 0 0 4px rgba(163, 193, 143, 0.85) !important;
+    background-color: rgba(163, 193, 143, 0.2) !important;
+}
+
+/* Подсветка выбранной фигуры (для мобильной версии) */
+.highlight-selected {
+    position: relative;
+    box-shadow: inset 0 0 0 4px rgba(163, 193, 143, 0.85) !important;
+}
+
+/* Подсветка возможного хода - зеленая точка */
+.highlight-possible {
+    position: relative;
+}
+
+.highlight-possible::after {
+    content: '';
+    position: absolute;
+    width: 28%;
+    height: 28%;
+    background: rgba(163, 193, 143, 0.9);
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    box-shadow: 0 0 8px rgba(163, 193, 143, 0.5);
+}
+
+/* Подсветка взятия - красная рамка */
+.highlight-capture {
+    position: relative;
+}
+
+.highlight-capture::after {
+    content: '';
+    position: absolute;
+    width: 85%;
+    height: 85%;
+    border: 4px solid rgba(193, 90, 90, 0.9);
+    border-radius: 12%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    box-shadow: 0 0 12px rgba(193, 90, 90, 0.5);
+}
