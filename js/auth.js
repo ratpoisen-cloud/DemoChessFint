@@ -2,7 +2,7 @@
 // Отвечает за: вход/выход через Google и Email, состояние пользователя
 
 window.setupAuth = function() {
-    onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(window.auth, (user) => {
         window.currentUser = user;
         const authGroup = document.getElementById('auth-buttons');
         const userInfo = document.getElementById('user-info');
@@ -33,7 +33,7 @@ window.setupAuth = function() {
             }
             
             if (!new URLSearchParams(window.location.search).get('room')) {
-                window.loadLobby(user);
+                if (window.loadLobby) window.loadLobby(user);
             }
         } else {
             authGroup?.classList.remove('hidden');
@@ -42,7 +42,7 @@ window.setupAuth = function() {
     });
 
     // Google вход
-    document.getElementById('login-google').onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
+    document.getElementById('login-google').onclick = () => signInWithPopup(window.auth, new GoogleAuthProvider());
 
     // Email модальное окно
     const emailModal = document.getElementById('email-modal');
@@ -67,7 +67,7 @@ window.setupAuth = function() {
         if (!email || !pass) return showError("Введите почту и пароль");
 
         try {
-            await signInWithEmailAndPassword(auth, email, pass);
+            await signInWithEmailAndPassword(window.auth, email, pass);
             emailModal.classList.add('hidden');
             document.getElementById('email-input').value = '';
             document.getElementById('password-input').value = '';
@@ -89,7 +89,7 @@ window.setupAuth = function() {
         if (pass.length < 6) return showError("Пароль должен быть от 6 символов");
 
         try {
-            await createUserWithEmailAndPassword(auth, email, pass);
+            await createUserWithEmailAndPassword(window.auth, email, pass);
             emailModal.classList.add('hidden');
             document.getElementById('email-input').value = '';
             document.getElementById('password-input').value = '';
@@ -104,5 +104,5 @@ window.setupAuth = function() {
     };
 
     // Выход
-    document.getElementById('logout-btn').onclick = () => signOut(auth).then(() => location.href = location.origin + location.pathname);
+    document.getElementById('logout-btn').onclick = () => signOut(window.auth).then(() => location.href = location.origin + location.pathname);
 };
