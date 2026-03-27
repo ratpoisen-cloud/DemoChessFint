@@ -1,6 +1,9 @@
 // ==================== КНОПКИ УПРАВЛЕНИЯ ====================
 // Отвечает за: подтверждение хода, сдачу, выход, реванш, отмену хода
 
+// Импорт Firebase функций (будут доступны из глобальной области после загрузки)
+// Функции ref, set, onValue, get доступны из firebase-config.js
+
 window.setupGameControls = function(gameRef, roomId) {
     // Подтверждение хода
     document.getElementById('confirm-btn').onclick = () => {
@@ -96,19 +99,21 @@ window.setupGameControls = function(gameRef, roomId) {
     
     // Слушатель запроса отмены
     const takebackRef = window.getTakebackRef(roomId);
-    onValue(takebackRef, (snap) => {
-        const request = snap.val();
-        if (!request) {
-            document.getElementById('takeback-request-box').classList.add('hidden');
-            window.pendingTakeback = null;
-            return;
-        }
-        
-        if (request.from !== window.playerColor && !request.answered) {
-            document.getElementById('takeback-request-box').classList.remove('hidden');
-            window.pendingTakeback = request;
-        }
-    });
+    if (typeof onValue !== 'undefined') {
+        onValue(takebackRef, (snap) => {
+            const request = snap.val();
+            if (!request) {
+                document.getElementById('takeback-request-box').classList.add('hidden');
+                window.pendingTakeback = null;
+                return;
+            }
+            
+            if (request.from !== window.playerColor && !request.answered) {
+                document.getElementById('takeback-request-box').classList.remove('hidden');
+                window.pendingTakeback = request;
+            }
+        });
+    }
     
     // Принять отмену
     document.getElementById('takeback-accept').onclick = () => {
