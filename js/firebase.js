@@ -3,20 +3,20 @@
 
 // Ссылки на Firebase
 window.getGameRef = function(roomId) {
-    return ref(db, `games/${roomId}`);
+    return ref(window.db, `games/${roomId}`);
 };
 
 window.getPlayersRef = function(roomId) {
-    return ref(db, `games/${roomId}/players`);
+    return ref(window.db, `games/${roomId}/players`);
 };
 
 window.getTakebackRef = function(roomId) {
-    return ref(db, `games/${roomId}/takebackRequest`);
+    return ref(window.db, `games/${roomId}/takebackRequest`);
 };
 
 // Создание игры
 window.createGame = async function(roomId, pgn, fen) {
-    return await set(ref(db, `games/${roomId}`), { 
+    return await set(ref(window.db, `games/${roomId}`), { 
         pgn: pgn, 
         fen: fen,
         gameState: 'active',
@@ -45,7 +45,7 @@ window.addPlayerToGame = async function(playersRef, uid, uName) {
 
 // Слежение за играми в лобби
 window.watchGames = function(callback) {
-    return onValue(ref(db, `games`), callback);
+    return onValue(ref(window.db, `games`), callback);
 };
 
 // Слежение за конкретной игрой
