@@ -148,5 +148,16 @@ if ('serviceWorker' in navigator) {
     <script src="js/ui.js"></script>
     <script src="js/game-core.js"></script>
     <script src="js/app.js"></script>
+    <!-- Добавьте эту строку после всех скриптов, перед закрывающим body -->
+<script>
+    // Проверка загрузки Firebase функций
+    setTimeout(() => {
+        if (typeof ref === 'undefined') {
+            console.error('Firebase functions not loaded!');
+        } else {
+            console.log('Firebase loaded successfully');
+        }
+    }, 1000);
+</script>
 </body>
 </html>
