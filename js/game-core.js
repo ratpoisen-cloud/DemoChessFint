@@ -8,6 +8,7 @@ window.pendingMove = null;
 window.selectedSquare = null;
 window.currentRoomId = null;
 window.pendingTakeback = null;
+window.dragSourceSquare = null; // Добавляем переменную для drag-and-drop
 
 // Лобби
 window.initLobby = function() {
@@ -89,8 +90,9 @@ window.initGame = async function(roomId) {
             window.game.load_pgn(data.pgn); 
             window.updateBoardPosition(window.game.fen(), true);
             window.pendingMove = null;
+            window.dragSourceSquare = null;
             document.getElementById('confirm-move-box').classList.add('hidden');
-            window.clearSelection();
+            window.removeHighlights();
         }
         window.updateUI(data);
     });
@@ -98,6 +100,3 @@ window.initGame = async function(roomId) {
     window.setupGameControls(gameRef, roomId);
     window.currentRoomId = roomId;
 };
-
-// Десктопный drag-and-drop больше не нужен, удаляем
-// window.handleDrop больше не используется
