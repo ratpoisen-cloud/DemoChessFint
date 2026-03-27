@@ -74,7 +74,7 @@ window.attachMobileClickHandler = function() {
     });
 };
 
-// Обновление ориентации доски (при реванше)
+// Обновление ориентации доски
 window.setBoardOrientation = function(color) {
     if (window.board) {
         window.board.orientation(color === 'b' ? 'black' : 'white');
