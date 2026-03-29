@@ -37,11 +37,11 @@ body {
     padding: 16px;
 }
 
-/* Переопределение цветов клеток через CSS */
+/* ===== ЦВЕТА КЛЕТОК ДОСКИ ===== */
 .white-1e1d7 { background-color: #f0f4e8 !important; }
 .black-3c85d { background-color: #3e5234 !important; }
 
-/* Топ-бар */
+/* ===== ТОП-БАР И АВТОРИЗАЦИЯ ===== */
 .top-bar {
     display: flex;
     justify-content: space-between;
@@ -79,7 +79,7 @@ body {
     gap: 12px;
 }
 
-/* Кнопки */
+/* ===== ОБЩИЕ КНОПКИ ===== */
 .btn {
     padding: 10px 22px;
     border: none;
@@ -138,7 +138,7 @@ body {
     width: 100%;
 }
 
-/* Карточки */
+/* ===== КАРТОЧКИ ===== */
 .card {
     background: var(--card);
     padding: 28px;
@@ -153,7 +153,7 @@ body {
     color: var(--accent);
 }
 
-/* Лобби */
+/* ===== ЛОББИ (КОНТЕЙНЕР СПИСКА ИГР) ===== */
 .games-grid {
     display: grid;
     gap: 12px;
@@ -162,6 +162,7 @@ body {
     overflow-y: auto;
 }
 
+/* ===== КАРТОЧКА ИГРЫ В ЛОББИ (ФИНАЛЬНАЯ ВЕРСИЯ) ===== */
 .game-item {
     background: #1a1a1a;
     padding: 16px 20px;
@@ -172,6 +173,8 @@ body {
     border-left: 4px solid var(--accent);
     transition: all 0.2s ease;
     cursor: pointer;
+    gap: 15px;
+    flex-wrap: wrap;
 }
 
 .game-item:hover {
@@ -181,7 +184,7 @@ body {
 
 .game-item.finished {
     border-left-color: var(--text-secondary);
-    opacity: 0.8;
+    opacity: 0.85;
 }
 
 .game-item.finished:hover {
@@ -190,18 +193,94 @@ body {
 
 .game-info {
     flex: 1;
+    min-width: 180px;
 }
 
 .game-info div {
     margin-bottom: 4px;
 }
 
-.game-info small {
-    color: var(--text-secondary);
+.game-meta {
+    display: flex;
+    gap: 15px;
     font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin: 5px 0;
+    flex-wrap: wrap;
 }
 
-/* Игровая область - АДАПТИВНАЯ ДОСКА */
+.game-id {
+    font-family: monospace;
+    background: rgba(255, 255, 255, 0.08);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.game-status {
+    font-weight: 500;
+}
+
+.game-time {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2px 8px;
+    border-radius: 12px;
+}
+
+.game-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+/* Кнопка "Играть" - светло-зеленая, как "Создать новую игру" */
+.play-btn {
+    min-width: 80px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+}
+
+.play-btn:hover {
+    background: #b8d0a8;
+    transform: translateY(-1px);
+}
+
+/* Кнопка "Удалить" - красная */
+.delete-btn {
+    background: var(--danger);
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+}
+
+.delete-btn:hover {
+    background: #ff6b6b;
+    transform: translateY(-1px);
+}
+
+.empty-lobby {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-secondary);
+}
+
+.empty-lobby small {
+    font-size: 0.8rem;
+    opacity: 0.7;
+}
+
+/* ===== ИГРОВАЯ ОБЛАСТЬ ===== */
 .game-layout {
     display: flex;
     gap: 24px;
@@ -214,7 +293,6 @@ body {
     position: relative;
 }
 
-/* Контейнер для доски */
 #myBoard {
     width: 100%;
     max-width: 650px;
@@ -225,7 +303,7 @@ body {
     height: auto;
 }
 
-/* ===== СТАТУС-ХЕДЕР НАД ДОСКОЙ (обновлено) ===== */
+/* ===== СТАТУС-ХЕДЕР НАД ДОСКОЙ ===== */
 .game-status-header {
     width: 100%;
     max-width: 660px;
@@ -273,7 +351,7 @@ body {
     font-size: 0.95rem;
 }
 
-/* ===== ИНДИКАТОР ХОДА (обновлено) ===== */
+/* ===== ИНДИКАТОР ХОДА ===== */
 .turn-status {
     display: flex;
     align-items: center;
@@ -309,7 +387,6 @@ body {
     letter-spacing: 0.3px;
 }
 
-/* Анимация */
 @keyframes turnPulse {
     0%, 100% {
         transform: scale(1);
@@ -321,10 +398,10 @@ body {
     }
 }
 
-/* Подсветка фигур (обновлено) */
+/* ===== ПОДСВЕТКА ФИГУР И ХОДОВ ===== */
 .highlight-selected {
     position: relative;
-    box-shadow: inset 0 0 0 4px rgba(163, 193, 143, 0.65) !important;
+    box-shadow: inset 0 0 0 4px rgba(163, 193, 143, 0.85) !important;
 }
 
 .highlight-possible {
@@ -334,14 +411,15 @@ body {
 .highlight-possible::after {
     content: '';
     position: absolute;
-    width: 24%;
-    height: 24%;
-    background: rgba(163, 193, 143, 0.75);
+    width: 28%;
+    height: 28%;
+    background: rgba(163, 193, 143, 0.9);
     border-radius: 50%;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     pointer-events: none;
+    box-shadow: 0 0 8px rgba(163, 193, 143, 0.5);
 }
 
 .highlight-capture {
@@ -351,18 +429,24 @@ body {
 .highlight-capture::after {
     content: '';
     position: absolute;
-    width: 82%;
-    height: 82%;
-    border: 3.5px solid rgba(193, 90, 90, 0.85);
-    border-radius: 14%;
+    width: 85%;
+    height: 85%;
+    border: 4px solid rgba(193, 90, 90, 0.9);
+    border-radius: 12%;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     pointer-events: none;
-    box-shadow: 0 0 12px rgba(193, 90, 90, 0.4);
+    box-shadow: 0 0 12px rgba(193, 90, 90, 0.5);
 }
 
-/* Оверлеи */
+.highlight-drag-source {
+    position: relative;
+    box-shadow: inset 0 0 0 4px rgba(163, 193, 143, 0.85) !important;
+    background-color: rgba(163, 193, 143, 0.2) !important;
+}
+
+/* ===== ОВЕРЛЕИ ===== */
 .confirm-overlay {
     position: absolute;
     top: 50%;
@@ -431,7 +515,7 @@ body {
     transform: scale(0.95);
 }
 
-/* Контролы */
+/* ===== КНОПКИ УПРАВЛЕНИЯ В ИГРЕ ===== */
 .controls {
     display: flex;
     gap: 12px;
@@ -440,7 +524,7 @@ body {
     justify-content: center;
 }
 
-/* Боковая панель */
+/* ===== БОКОВАЯ ПАНЕЛЬ ===== */
 .side-panel {
     background: var(--card);
     border-radius: 20px;
@@ -511,7 +595,7 @@ body {
     white-space: nowrap;
 }
 
-/* Модальные окна */
+/* ===== МОДАЛЬНЫЕ ОКНА ===== */
 .modal {
     position: fixed;
     inset: 0;
@@ -546,7 +630,22 @@ body {
     font-size: 1rem;
 }
 
-/* Адаптивность */
+/* ===== БУКВЕННЫЙ АВАТАР ===== */
+.letter-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6b8c5c, #4a6a3a);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+    color: white;
+    border: 2px solid var(--accent);
+}
+
+/* ===== АДАПТИВНОСТЬ ===== */
 @media (max-width: 900px) {
     .game-layout {
         flex-direction: column;
@@ -585,304 +684,8 @@ body {
     .game-status-header {
         padding: 12px 16px;
     }
-}
-
-/* Буквенный аватар */
-.letter-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--accent), #8a9a7a);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    font-size: 1.2rem;
-    color: #000;
-    border: 2px solid var(--accent);
-}
-
-.letter-avatar {
-    background: linear-gradient(135deg, #6b8c5c, #4a6a3a);
-    color: white;
-}
-/* Добавьте в конец файла style.css */
-
-/* Подсветка источника при перетаскивании (зеленый контур) */
-.highlight-drag-source {
-    position: relative;
-    box-shadow: inset 0 0 0 4px rgba(163, 193, 143, 0.85) !important;
-    background-color: rgba(163, 193, 143, 0.2) !important;
-}
-
-/* Подсветка выбранной фигуры (для мобильной версии) */
-.highlight-selected {
-    position: relative;
-    box-shadow: inset 0 0 0 4px rgba(163, 193, 143, 0.85) !important;
-}
-
-/* Подсветка возможного хода - зеленая точка */
-.highlight-possible {
-    position: relative;
-}
-
-.highlight-possible::after {
-    content: '';
-    position: absolute;
-    width: 28%;
-    height: 28%;
-    background: rgba(163, 193, 143, 0.9);
-    border-radius: 50%;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    pointer-events: none;
-    box-shadow: 0 0 8px rgba(163, 193, 143, 0.5);
-}
-
-/* Подсветка взятия - красная рамка */
-.highlight-capture {
-    position: relative;
-}
-
-.highlight-capture::after {
-    content: '';
-    position: absolute;
-    width: 85%;
-    height: 85%;
-    border: 4px solid rgba(193, 90, 90, 0.9);
-    border-radius: 12%;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    pointer-events: none;
-    box-shadow: 0 0 12px rgba(193, 90, 90, 0.5);
-}
-/* ===== СТИЛИ ДЛЯ ЛОББИ С УДАЛЕНИЕМ ===== */
-.game-item {
-    background: #1a1a1a;
-    padding: 16px 20px;
-    border-radius: 16px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-left: 4px solid var(--accent);
-    transition: all 0.2s ease;
-    cursor: pointer;
-    gap: 15px;
-    flex-wrap: wrap;
-}
-
-.game-item:hover {
-    background: #222;
-    transform: translateX(4px);
-}
-
-.game-item.finished {
-    border-left-color: var(--text-secondary);
-    opacity: 0.85;
-}
-
-.game-item.finished:hover {
-    opacity: 1;
-}
-
-.game-info {
-    flex: 1;
-    min-width: 150px;
-}
-
-.game-info div {
-    margin-bottom: 4px;
-}
-
-.game-meta {
-    display: flex;
-    gap: 15px;
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    margin: 5px 0;
-}
-
-.game-id {
-    font-family: monospace;
-    background: rgba(255,255,255,0.1);
-    padding: 2px 6px;
-    border-radius: 4px;
-}
-
-.game-status {
-    font-weight: 500;
-}
-
-.game-actions {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-}
-
-.delete-btn {
-    background: var(--danger);
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.delete-btn:hover {
-    background: #ff6b6b;
-    transform: scale(1.02);
-}
-
-.empty-lobby {
-    text-align: center;
-    padding: 40px;
-    color: var(--text-secondary);
-}
-
-.empty-lobby small {
-    font-size: 0.8rem;
-    opacity: 0.7;
-}
-
-@media (max-width: 600px) {
-    .game-item {
-        flex-direction: column;
-        align-items: flex-start;
-    }
     
-    .game-actions {
-        width: 100%;
-        justify-content: flex-end;
-        margin-top: 10px;
-    }
-    
-    .game-meta {
-        flex-direction: column;
-        gap: 5px;
-    }
-}
-/* Стиль для отображения времени последнего хода */
-.game-time {
-    background: rgba(255, 255, 255, 0.05);
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 0.7rem;
-    font-weight: normal;
-}
-
-/* Адаптация для мобильных */
-@media (max-width: 600px) {
-    .game-meta {
-        gap: 8px;
-        flex-wrap: wrap;
-    }
-}
-/* ===== СТИЛИ ДЛЯ ЛОББИ ===== */
-.game-item {
-    background: #1a1a1a;
-    padding: 16px 20px;
-    border-radius: 16px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-left: 4px solid var(--accent);
-    transition: all 0.2s ease;
-    cursor: pointer;
-    gap: 15px;
-    flex-wrap: wrap;
-}
-
-.game-item:hover {
-    background: #222;
-    transform: translateX(4px);
-}
-
-.game-item.finished {
-    border-left-color: var(--text-secondary);
-    opacity: 0.85;
-}
-
-.game-item.finished:hover {
-    opacity: 1;
-}
-
-.game-info {
-    flex: 1;
-    min-width: 180px;
-}
-
-.game-info div {
-    margin-bottom: 4px;
-}
-
-.game-meta {
-    display: flex;
-    gap: 15px;
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    margin: 5px 0;
-    flex-wrap: wrap;
-}
-
-.game-id {
-    font-family: monospace;
-    background: rgba(255, 255, 255, 0.08);
-    padding: 2px 6px;
-    border-radius: 4px;
-}
-
-.game-status {
-    font-weight: 500;
-}
-
-.game-time {
-    background: rgba(255, 255, 255, 0.05);
-    padding: 2px 8px;
-    border-radius: 12px;
-}
-
-.game-actions {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-}
-
-.delete-btn {
-    background: var(--danger);
-    color: white;
-    border: none;
-    padding: 6px 14px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 500;
-    transition: all 0.2s ease;
-}
-
-.delete-btn:hover {
-    background: #ff6b6b;
-    transform: scale(1.02);
-}
-
-.empty-lobby {
-    text-align: center;
-    padding: 40px;
-    color: var(--text-secondary);
-}
-
-.empty-lobby small {
-    font-size: 0.8rem;
-    opacity: 0.7;
-}
-
-.play-btn {
-    min-width: 80px;
-}
-
-/* Адаптация для мобильных */
-@media (max-width: 600px) {
+    /* Адаптация лобби для мобильных */
     .game-item {
         flex-direction: column;
         align-items: flex-start;
