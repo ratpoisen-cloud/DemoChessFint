@@ -11,7 +11,13 @@ window.addEventListener('DOMContentLoaded', () => {
     
     // Инициализируем кнопки тем
     window.initThemeButtons();
-    
+    // Ждем авторизации для инициализации кнопки очистки
+    const checkUser = setInterval(() => {
+        if (window.currentUser) {
+            clearInterval(checkUser);
+            window.initClearFinishedButton(window.currentUser.uid);
+        }
+    }, 500);
     // Проверяем, есть ли комната в URL
     const urlParams = new URLSearchParams(window.location.search);
     const roomId = urlParams.get('room');
