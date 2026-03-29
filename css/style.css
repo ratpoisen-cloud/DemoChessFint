@@ -292,6 +292,7 @@ body {
 }
 
 /* ===== ИГРОВАЯ ОБЛАСТЬ ===== */
+/* Игровая область - АДАПТИВНАЯ ДОСКА */
 .game-layout {
     display: flex;
     gap: 24px;
@@ -302,6 +303,9 @@ body {
     flex: 1;
     min-width: 0;
     position: relative;
+    max-width: 660px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 #myBoard {
