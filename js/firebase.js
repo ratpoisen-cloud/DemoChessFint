@@ -16,7 +16,10 @@ window.getPlayersRef = function(roomId) {
 window.getTakebackRef = function(roomId) {
     return ref(window.db, `games/${roomId}/takebackRequest`);
 };
-
+// Ссылка на запрос ничьей
+window.getDrawRef = function(roomId) {
+    return ref(window.db, `games/${roomId}/drawRequest`);
+};
 // Создание игры
 window.createGame = async function(roomId, pgn, fen) {
     const now = Date.now();

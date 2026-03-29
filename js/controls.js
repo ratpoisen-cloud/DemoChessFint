@@ -146,7 +146,54 @@ window.setupGameControls = function(gameRef, roomId) {
         document.getElementById('takeback-request-box').classList.add('hidden');
         window.pendingTakeback = null;
     };
-    
+    // ===== ЛОГИКА ПРЕДЛОЖЕНИЯ НИЧЬЕЙ =====
+
+// Кнопка "Предложить ничью"
+document.getElementById('draw-btn').onclick = () => {
+    if (window.game.game_over()) {
+        alert("Игра уже окончена");
+        return;
+    }
+    if (window.pendingDraw) {
+        alert("Запрос уже отправлен");
+        return;
+    }
+    window.sendDrawRequest(gameRef, roomId);
+};
+
+// Слушатель запроса на ничью
+const drawRef = window.getDrawRef(roomId);
+if (typeof onValue !== 'undefined') {
+    onValue(drawRef, (snap) => {
+        const request = snap.val();
+        if (!request) {
+            document.getElementById('draw-request-box').classList.add('hidden');
+            window.pendingDraw = null;
+            return;
+        }
+        
+        if (request.from !== window.playerColor && !request.answered) {
+            document.getElementById('draw-request-text').innerHTML = 
+                `${request.fromName || 'Соперник'} предлагает ничью`;
+            document.getElementById('draw-request-box').classList.remove('hidden');
+            window.pendingDraw = request;
+        }
+    });
+}
+
+// Принять ничью
+document.getElementById('draw-accept').onclick = () => {
+    if (window.pendingDraw) {
+        window.acceptDraw(gameRef, roomId);
+    }
+};
+
+// Отклонить ничью
+document.getElementById('draw-reject').onclick = () => {
+    if (window.pendingDraw) {
+        window.rejectDraw(gameRef, roomId);
+    }
+};
     // Реванш
     document.getElementById('modal-rematch-btn').onclick = async () => {
         const modal = document.getElementById('game-modal');

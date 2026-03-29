@@ -178,7 +178,40 @@ window.deleteGame = async function(gameId, userId) {
         alert("У вас нет прав на удаление этой игры");
     }
 };
+// Функция отправки запроса на ничью
+window.sendDrawRequest = async function(gameRef, roomId) {
+    const currentTurn = window.game.turn();
+    const request = {
+        from: window.playerColor,
+        fromName: window.currentUser?.displayName || window.currentUser?.email?.split('@')[0] || 'Игрок',
+        timestamp: Date.now(),
+        turn: currentTurn
+    };
+    
+    await window.updateGame(gameRef, { drawRequest: request });
+    alert("Запрос на ничью отправлен сопернику");
+};
 
+// Функция принятия ничьей
+window.acceptDraw = async function(gameRef, roomId) {
+    const updateData = { 
+        gameState: 'game_over', 
+        message: 'Ничья по соглашению',
+        pgn: window.game.pgn()
+    };
+    await window.updateGame(gameRef, updateData);
+    document.getElementById('draw-request-box').classList.add('hidden');
+    window.pendingDraw = null;
+    alert("Игра закончилась ничьей");
+};
+
+// Функция отклонения ничьей
+window.rejectDraw = async function(gameRef, roomId) {
+    await window.updateGame(gameRef, { drawRequest: null });
+    document.getElementById('draw-request-box').classList.add('hidden');
+    window.pendingDraw = null;
+    alert("Соперник отклонил запрос на ничью");
+};
 // Функция массового удаления завершённых игр
 window.clearFinishedGames = async function(userId) {
     const games = (await get(ref(window.db, `games`))).val();

@@ -112,7 +112,18 @@ body {
     background: var(--card);
     border-color: var(--accent);
 }
+/* Кнопка "Предложить ничью" - кремовый цвет */
+.btn-draw {
+    background: #e8dcc8;
+    color: #3a3a2a;
+    border: 1px solid #c9b896;
+}
 
+.btn-draw:hover {
+    background: #f0e6d6;
+    transform: translateY(-1.5px);
+    box-shadow: 0 4px 12px rgba(200, 180, 140, 0.3);
+}
 .btn-danger {
     background: var(--danger);
     color: white;

@@ -82,13 +82,23 @@ if ('serviceWorker' in navigator) {
                     </div>
                 </div>
             </div>
-
+<!-- ===== ОВЕРЛЕЙ ЗАПРОСА НИЧЬЕЙ ===== -->
+<div id="draw-request-box" class="confirm-overlay hidden" style="background: none; box-shadow: none; backdrop-filter: none; padding: 0;">
+    <div class="request-card">
+        <p id="draw-request-text">Соперник предлагает ничью</p>
+        <div class="request-buttons">
+            <button id="draw-accept" class="btn-round btn-success">✓</button>
+            <button id="draw-reject" class="btn-round btn-danger">✕</button>
+        </div>
+    </div>
+</div>
             <!-- ===== КНОПКИ УПРАВЛЕНИЯ ===== -->
             <div class="controls">
-                <button id="resign-btn" class="btn btn-danger">Сдаться</button>
-                <button id="takeback-btn" class="btn btn-outline">Просить отмену</button>
-                <button id="exit-btn" class="btn btn-outline">В лобби</button>
-            </div>
+    <button id="resign-btn" class="btn btn-danger">Сдаться</button>
+    <button id="takeback-btn" class="btn btn-outline">Просить отмену</button>
+    <button id="draw-btn" class="btn btn-outline">Предложить ничью</button>
+    <button id="exit-btn" class="btn btn-outline">В лобби</button>
+</div>
         </div>
 
         <!-- ===== БОКОВАЯ ПАНЕЛЬ ===== -->
