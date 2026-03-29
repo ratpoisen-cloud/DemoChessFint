@@ -1,0 +1,660 @@
+:root {
+    --bg: #0f110f;
+    --card: #1c1f1c;
+    --surface: #242724;
+    --accent: #a3c18f;
+    --accent-dark: #7e9a6b;
+    --danger: #c15a5a;
+    --success: #7eb87e;
+    --text: #e8e8d8;
+    --text-secondary: #9ca39a;
+    --border: #333833;
+
+    --highlight-my-turn: rgba(163, 193, 143, 0.35);
+    --shadow-accent: rgba(163, 193, 143, 0.25);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+}
+
+.hidden { 
+    display: none !important; 
+}
+
+.main-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 16px;
+}
+
+/* Переопределение цветов клеток через CSS */
+.white-1e1d7 { background-color: #f0f4e8 !important; }
+.black-3c85d { background-color: #3e5234 !important; }
+
+/* Топ-бар */
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+#user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--card);
+    padding: 6px 16px 6px 10px;
+    border-radius: 50px;
+    border: 1px solid var(--border);
+}
+
+#user-photo {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    object-fit: cover;
+}
+
+#user-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.auth-group {
+    display: flex;
+    gap: 12px;
+}
+
+/* Кнопки */
+.btn {
+    padding: 10px 22px;
+    border: none;
+    border-radius: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 0.92rem;
+}
+
+.btn-primary {
+    background: var(--accent);
+    color: #0f110f;
+    font-weight: 700;
+}
+
+.btn-primary:hover {
+    background: #b8d0a8;
+    transform: translateY(-1.5px);
+    box-shadow: 0 4px 12px var(--shadow-accent);
+}
+
+.btn-outline {
+    background: transparent;
+    color: var(--text);
+    border: 2px solid var(--border);
+}
+
+.btn-outline:hover {
+    background: var(--card);
+    border-color: var(--accent);
+}
+
+.btn-danger {
+    background: var(--danger);
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #9e4545;
+}
+
+.btn-success {
+    background: var(--accent);
+    color: #000;
+}
+
+.btn-sm {
+    padding: 6px 14px;
+    font-size: 0.8rem;
+}
+
+.btn-large {
+    padding: 14px 32px;
+    font-size: 1.1rem;
+    width: 100%;
+}
+
+/* Карточки */
+.card {
+    background: var(--card);
+    padding: 28px;
+    border-radius: 24px;
+    border: 1px solid var(--border);
+}
+
+.section-title {
+    font-size: 1.8rem;
+    text-align: center;
+    margin-bottom: 20px;
+    color: var(--accent);
+}
+
+/* Лобби */
+.games-grid {
+    display: grid;
+    gap: 12px;
+    margin: 20px 0;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.game-item {
+    background: #1a1a1a;
+    padding: 16px 20px;
+    border-radius: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 4px solid var(--accent);
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.game-item:hover {
+    background: #222;
+    transform: translateX(4px);
+}
+
+.game-item.finished {
+    border-left-color: var(--text-secondary);
+    opacity: 0.8;
+}
+
+.game-item.finished:hover {
+    opacity: 1;
+}
+
+.game-info {
+    flex: 1;
+}
+
+.game-info div {
+    margin-bottom: 4px;
+}
+
+.game-info small {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+}
+
+/* Игровая область - АДАПТИВНАЯ ДОСКА */
+.game-layout {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+}
+
+.board-area {
+    flex: 1;
+    min-width: 0;
+    position: relative;
+}
+
+/* Контейнер для доски */
+#myBoard {
+    width: 100%;
+    max-width: 650px;
+}
+
+#myBoard img {
+    width: 100%;
+    height: auto;
+}
+
+/* ===== СТАТУС-ХЕДЕР НАД ДОСКОЙ (обновлено) ===== */
+.game-status-header {
+    width: 100%;
+    max-width: 660px;
+    background: var(--card);
+    border-radius: 22px;
+    padding: 16px 24px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    border: 1px solid var(--border);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.player-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 22px;
+    border-radius: 40px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.player-badge.white-piece {
+    background: linear-gradient(135deg, #a3c18f, #8eb57a);
+    color: #0f110f;
+    box-shadow: 0 3px 12px rgba(163, 193, 143, 0.3);
+}
+
+.player-badge.black-piece {
+    background: #2a2f2a;
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+.player-icon {
+    font-size: 1.2rem;
+}
+
+.player-color-text {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+/* ===== ИНДИКАТОР ХОДА (обновлено) ===== */
+.turn-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(163, 193, 143, 0.12);
+    padding: 9px 26px;
+    border-radius: 40px;
+    font-weight: 700;
+    font-size: 1.02rem;
+    border: 1px solid rgba(163, 193, 143, 0.25);
+    transition: all 0.3s ease;
+}
+
+.turn-status.my-turn {
+    background: linear-gradient(135deg, rgba(163, 193, 143, 0.35), rgba(163, 193, 143, 0.15));
+    border-color: var(--accent);
+    box-shadow: 0 0 18px var(--highlight-my-turn);
+    animation: turnPulse 2s ease-in-out infinite;
+}
+
+.turn-status.opponent-turn {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: var(--border);
+    opacity: 0.85;
+}
+
+.game-status-text {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    background: rgba(0, 0, 0, 0.3);
+    padding: 6px 16px;
+    border-radius: 30px;
+    letter-spacing: 0.3px;
+}
+
+/* Анимация */
+@keyframes turnPulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(163, 193, 143, 0.4);
+    }
+    50% {
+        transform: scale(1.035);
+        box-shadow: 0 0 0 10px rgba(163, 193, 143, 0);
+    }
+}
+
+/* Подсветка фигур (обновлено) */
+.highlight-selected {
+    position: relative;
+    box-shadow: inset 0 0 0 4px rgba(163, 193, 143, 0.65) !important;
+}
+
+.highlight-possible {
+    position: relative;
+}
+
+.highlight-possible::after {
+    content: '';
+    position: absolute;
+    width: 24%;
+    height: 24%;
+    background: rgba(163, 193, 143, 0.75);
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+
+.highlight-capture {
+    position: relative;
+}
+
+.highlight-capture::after {
+    content: '';
+    position: absolute;
+    width: 82%;
+    height: 82%;
+    border: 3.5px solid rgba(193, 90, 90, 0.85);
+    border-radius: 14%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    box-shadow: 0 0 12px rgba(193, 90, 90, 0.4);
+}
+
+/* Оверлеи */
+.confirm-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 150;
+    display: flex;
+    gap: 16px;
+    background: rgba(0, 0, 0, 0.9);
+    padding: 15px 25px;
+    border-radius: 60px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.request-card {
+    background: var(--card);
+    padding: 24px;
+    border-radius: 24px;
+    border: 2px solid var(--accent);
+    text-align: center;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+    min-width: 260px;
+}
+
+.request-card p {
+    margin: 0 0 20px 0;
+    font-size: 1rem;
+    color: var(--text);
+}
+
+.request-buttons {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+}
+
+.btn-round {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    font-size: 1.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+    color: white;
+}
+
+.btn-round.btn-success {
+    background: var(--accent);
+    color: #000;
+}
+
+.btn-round.btn-danger {
+    background: var(--danger);
+}
+
+.btn-round:hover {
+    transform: scale(1.08);
+}
+
+.btn-round:active {
+    transform: scale(0.95);
+}
+
+/* Контролы */
+.controls {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+/* Боковая панель */
+.side-panel {
+    background: var(--card);
+    border-radius: 20px;
+    padding: 20px;
+    width: 320px;
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.side-panel h3 {
+    margin: 0 0 8px 0;
+    font-size: 1.2rem;
+    color: var(--accent);
+    text-align: center;
+}
+
+.move-list-content {
+    background: #0a0a0a;
+    padding: 12px;
+    border-radius: 12px;
+    height: 350px;
+    overflow-y: auto;
+    font-family: monospace;
+    font-size: 0.85rem;
+    display: grid;
+    grid-template-columns: 35px 1fr 1fr;
+    gap: 6px;
+}
+
+.move-list-content div {
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.share-box {
+    margin-top: auto;
+}
+
+.share-box small {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+}
+
+.share-container {
+    display: flex;
+    gap: 8px;
+}
+
+.share-container input {
+    flex: 1;
+    background: #1a1a1a;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.share-container .btn {
+    padding: 10px 16px;
+    white-space: nowrap;
+}
+
+/* Модальные окна */
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: var(--card);
+    padding: 32px;
+    border-radius: 24px;
+    max-width: 380px;
+    width: 90%;
+    text-align: center;
+    border: 1px solid var(--accent);
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
+    box-sizing: border-box;
+}
+
+.input-field {
+    width: 100%;
+    padding: 14px;
+    margin: 10px 0;
+    background: #1a1a1a;
+    border: 1px solid var(--border);
+    color: white;
+    border-radius: 12px;
+    box-sizing: border-box;
+    font-size: 1rem;
+}
+
+/* Адаптивность */
+@media (max-width: 900px) {
+    .game-layout {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .board-area {
+        max-width: 100%;
+        width: 100%;
+    }
+    
+    .side-panel {
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    .move-list-content {
+        height: 250px;
+    }
+}
+
+@media (max-width: 600px) {
+    .main-container {
+        padding: 12px;
+    }
+    
+    .card {
+        padding: 20px;
+    }
+    
+    .top-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .game-status-header {
+        padding: 12px 16px;
+    }
+}
+
+/* Буквенный аватар */
+.letter-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), #8a9a7a);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+    color: #000;
+    border: 2px solid var(--accent);
+}
+
+.letter-avatar {
+    background: linear-gradient(135deg, #6b8c5c, #4a6a3a);
+    color: white;
+}
+/* Добавьте в конец файла style.css */
+
+/* Подсветка источника при перетаскивании (зеленый контур) */
+.highlight-drag-source {
+    position: relative;
+    box-shadow: inset 0 0 0 4px rgba(163, 193, 143, 0.85) !important;
+    background-color: rgba(163, 193, 143, 0.2) !important;
+}
+
+/* Подсветка выбранной фигуры (для мобильной версии) */
+.highlight-selected {
+    position: relative;
+    box-shadow: inset 0 0 0 4px rgba(163, 193, 143, 0.85) !important;
+}
+
+/* Подсветка возможного хода - зеленая точка */
+.highlight-possible {
+    position: relative;
+}
+
+.highlight-possible::after {
+    content: '';
+    position: absolute;
+    width: 28%;
+    height: 28%;
+    background: rgba(163, 193, 143, 0.9);
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    box-shadow: 0 0 8px rgba(163, 193, 143, 0.5);
+}
+
+/* Подсветка взятия - красная рамка */
+.highlight-capture {
+    position: relative;
+}
+
+.highlight-capture::after {
+    content: '';
+    position: absolute;
+    width: 85%;
+    height: 85%;
+    border: 4px solid rgba(193, 90, 90, 0.9);
+    border-radius: 12%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    box-shadow: 0 0 12px rgba(193, 90, 90, 0.5);
+}
