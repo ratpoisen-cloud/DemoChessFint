@@ -102,7 +102,11 @@ window.updateGameModal = function(data) {
         document.getElementById('game-modal').classList.remove('hidden');
         document.getElementById('modal-title').innerHTML = '🏆 Игра окончена';
         document.getElementById('modal-desc').innerHTML = data.message || window.getGameResultMessage(window.game);
-        
+        if (data.players) {
+        window.game.header('White', data.players.whiteName || 'Unknown');
+        window.game.header('Black', data.players.blackName || 'Unknown');
+    }
+    window.game.header('Result', window.game.in_draw() ? '1/2-1/2' : (window.game.turn() === 'w' ? '0-1' : '1-0'));
         document.getElementById('confirm-move-box').classList.add('hidden');
         window.pendingMove = null;
         window.clearSelection();
